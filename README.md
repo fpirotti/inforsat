@@ -1,2 +1,2 @@
-# inforsat
-Advanced Sentinel index viewer for forests - loosely forked from infrotrac
+# infortrac
+Fork of Marco Piragnolo's Infortrac app, from Stefano Grigolato's Infortrac project
