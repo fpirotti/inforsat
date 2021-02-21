@@ -25,231 +25,83 @@ nomeAnalisi<-c("NDVI","RGI","NDMI", "NIR", "MASCHERA NUVOLE")
 # FUNZIONE CHE CALCOLA L'INDICE
 #
 #
-getIndice <- function(polygonString, inizio, fine, nomeIndice){
+getIndice <- function(session, myPolygons){
   
-  poligono<-isolate(polygonString)
-  start<-isolate(inizio)
-  end<-isolate(fine)
+  area<-st_area(myPolygons$geometry)
+  npixels<-as.integer(sum(area)/400)
+  nPolygons<-nrow(myPolygons)
+  nr<-nrow(images.lut)
+  columns<-c("FID", "Date",  "n","mean","10%","25%" ,"50%","75%","90%", "max", "min")
+  myResult<-setNames(data.frame(matrix(ncol = length(columns), nrow = nPolygons*nr)), 
+                     columns)
+  ## prendo uno per fare pre processing di alcune operazioni sui poligoni
+  ## ed evitare che vengano rifatte nel loop
+  vrt<-file.path(images.lut[1, ]$folder, "mapservVRT_20m.vrt")
+  terra.vrt<- terra::rast(vrt)
+  terra.polys<-terra::vect( as_Spatial( st_transform( myPolygons, crs(vrt) ) ) ) 
+ 
+  maskPolys<-list()
+  for (poly in 1:nPolygons) {
+    maskPolys[[poly]]<-terra::rasterize( terra.polys[poly, ], terra::crop(terra.vrt, terra.polys[poly, ]) )
+  }
   
-  conInfo<-myconnection()
-  
-  #qui estraggo uuid delle immagini in base alla data
-  uuidDate<-paste(" SELECT beginposition, uuid FROM esa_catalogue.s2_loaded_mat where beginposition>='",start,"' AND endposition<='",end,"' AND processinglevel='Level-2A'  AND relativeorbitnumber=22 AND cloudcoverpercentage<20 AND identifier ~ 'T32TQS' ORDER BY beginposition ASC");
-  uuidResDate<-DBI::dbGetQuery(conInfo, uuidDate)  
-  
-  #bande per ciclare il loop
-  uuidBand<-as.vector(uuidResDate[,2])
-  
-  #leggo WKT
-  d32<-rgeos::readWKT(paste("POLYGON((",poligono,"))"),p4s ="+init=epsg:4326")
-  d32<-sp::spTransform(d32, sp::CRS("+init=epsg:32632"))
-  
-  #bande per ciclare la mappa
-  uuidBandPG<-as.vector(lapply(uuidBand,paste0,spatialResolution[as.numeric(nomeIndice)]))
-  
-  myResult<-setNames(data.frame(matrix(ncol = 7, nrow = 0)), c("count", "sum", "mean", "stddev", "min", "max","uuid"))
-  
-  shiny::withProgress(message = 'Making plot', value = 0, {  
+  shiny::withProgress(message =  sprintf("Analizzo: TOT=%d pixel (20m) nei poligoni", npixels), value = 0, {  
     #ciclo su ogni granule
-    for (i in 1:length(uuidBand[])) {
+      #terra::crop( terra::rast() ) 
+
+    count<-1
+    for (i in 1:nr) {
+      date<- (images.lut[i, ]$dates)
+      vrt<-file.path(images.lut[i, ]$folder, "mapservVRT_20m.vrt")
+      if( !file.exists(vrt) ){
+        shinyalert("VRT non trovato", "Contatta assistenza")
+        return()
+      }
+      terra.vrt<- terra::rast(vrt)
+      names(terra.vrt)<-images.lut[i, ]$bands[[1]]
+      if(is.null(terra.vrt$B08)) terra.vrt$B08<-terra.vrt$B8A
       
-      switch(nomeIndice, 
-             '1'={
-               
-               schema<-"s2"
-               table<-as.character(uuidBandPG[i])
-               stringa<-c(schema,table)
-               
-               NIR<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa), rast = "rast", bands=4, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) ) 
-               )
-               
-               
-               R<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa), rast = "rast", bands=3, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) ) 
-               )
-               
-               myMap2<-(NIR-R)/(NIR+R)
-               
-               #controllo che sia un raster
-               if(is(myMap2,"RasterLayer")){
-                 myMap3<-maskRasterGrafico(uuidBand[i], myMap2, d32)
-                 
-                 tot<- ncell(myMap3)
-                 somma<-cellStats(myMap3, stat='sum',na.rm=TRUE)
-                 media<-cellStats(myMap3, stat='mean',na.rm=TRUE)
-                 deviaz<-cellStats(myMap3, stat='sd',na.rm=TRUE)
-                 minimo<-cellStats(myMap3, stat='min',na.rm=TRUE)
-                 massimo<-cellStats(myMap3, stat='max',na.rm=TRUE)
-                 
-                 myResult[i, "uuid"]<-uuidBand[i];
-                 
-                 myResult[i, "count"]<-tot;
-                 
-                 myResult[i, "sum"]<-somma;
-                 
-                 myResult[i, "mean"]<-media;
-                 
-                 myResult[i, "stddev"]<-deviaz;
-                 
-                 myResult[i, "min"]<-minimo;
-                 
-                 myResult[i, "max"]<-massimo;
-               }#chiudo if
-             },
-             '2'={                  
-               schema<-"s2"
-               table<-as.character(uuidBandPG[i])
-               stringa<-c(schema,table)
-               
-               R<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa), rast = "rast", bands =3, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) ) 
-               )
-               
-               G<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa), rast = "rast", bands=2, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) ) 
-               )
-               
-               myMap2<-(R/G)
-               
-               #controllo che sia un raster
-               if(is(myMap2,"RasterLayer")){
-                 myMap3<-maskRasterGrafico(uuidBand[i], myMap2, d32)
-                 
-                 #controllo che sia un raster
-                 tot<- ncell(myMap2)
-                 somma<-cellStats(myMap3, stat='sum',na.rm=TRUE)
-                 media<-cellStats(myMap3, stat='mean',na.rm=TRUE)
-                 deviaz<-cellStats(myMap3, stat='sd',na.rm=TRUE)
-                 minimo<-cellStats(myMap3, stat='min',na.rm=TRUE)
-                 massimo<-cellStats(myMap3, stat='max',na.rm=TRUE)
-                 
-                 myResult[i, "uuid"]<-uuidBand[i];
-                 
-                 myResult[i, "count"]<-tot;
-                 
-                 myResult[i, "sum"]<-somma;
-                 
-                 myResult[i, "mean"]<-media;
-                 
-                 myResult[i, "stddev"]<-deviaz;
-                 
-                 myResult[i, "min"]<-minimo;
-                 
-                 myResult[i, "max"]<-massimo;
-               }#chiudo il controllo del raster
-             },
-             '3'={              
-               schema<-"s2"
-               
-               #la banda 11 è a 20m
-               table11<-as.character(uuidBandPG[i])
-               stringa11<-c(schema,table11)
-               
-               #la band a 8 è a 10m
-               table8<-str_replace(table11,"_20m","_10m")
-               stringa8<-c(schema,table8)
-               
-               NIR8<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa8), rast = "rast", bands=4, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) ) 
-               )
-               
-               NIR11<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa11), rast = "rast", bands=5, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) )
-               )
-               
-               NIR11<-checkTC(resample(NIR11,NIR8,method="ngb")
-               )
-               
-               myMap2<-(NIR8-NIR11)/(NIR8+NIR11)
-               
-               #controllo che sia un raster
-               if(is(myMap2,"RasterLayer")){
-                 myMap3<-maskRasterGrafico(uuidBand[i], myMap2, d32)
-                 
-                 
-                 #controllo che sia un raster
-                 tot<- ncell(myMap2)
-                 somma<-cellStats(myMap3, stat='sum',na.rm=TRUE)
-                 media<-cellStats(myMap3, stat='mean',na.rm=TRUE)
-                 deviaz<-cellStats(myMap3, stat='sd',na.rm=TRUE)
-                 minimo<-cellStats(myMap3, stat='min',na.rm=TRUE)
-                 massimo<-cellStats(myMap3, stat='max',na.rm=TRUE)
-                 
-                 myResult[i, "uuid"]<-uuidBand[i];
-                 
-                 myResult[i, "count"]<-tot;
-                 
-                 myResult[i, "sum"]<-somma;
-                 
-                 myResult[i, "mean"]<-media;
-                 
-                 myResult[i, "stddev"]<-deviaz;
-                 
-                 myResult[i, "min"]<-minimo;
-                 
-                 myResult[i, "max"]<-massimo;
-               }#chiudo controllo raster
-             },
-             '4'={                  
-               schema<-"s2"
-               table<-as.character(uuidBandPG[i])
-               stringa<-c(schema,table)
-               
-               NIR<-checkTC(rpostgis::pgGetRast(conInfo, as.character(stringa), rast = "rast", bands=4, boundary=c(bbox(d32)[2,2], bbox(d32)[2,1],bbox(d32)[1,2],bbox(d32)[1,1]) ) 
-               )
-               
-               #controllo che sia un raster
-               if(is(NIR,"RasterLayer")){
-                 myMap2<-(NIR/10000)
-                 
-                 myMap3<-maskRasterGrafico(uuidBand[i], myMap2, d32)
-                 
-                 tot<- ncell(myMap3)
-                 somma<-cellStats(myMap3, stat='sum',na.rm=TRUE)
-                 media<-cellStats(myMap3, stat='mean',na.rm=TRUE)
-                 deviaz<-cellStats(myMap3, stat='sd',na.rm=TRUE)
-                 minimo<-cellStats(myMap3, stat='min',na.rm=TRUE)
-                 massimo<-cellStats(myMap3, stat='max',na.rm=TRUE)
-                 
-                 myResult[i, "uuid"]<-uuidBand[i];
-                 
-                 myResult[i, "count"]<-tot;
-                 
-                 myResult[i, "sum"]<-somma;
-                 
-                 myResult[i, "mean"]<-media;
-                 
-                 myResult[i, "stddev"]<-deviaz;
-                 
-                 myResult[i, "min"]<-minimo;
-                 
-                 myResult[i, "max"]<-massimo;
-               }#chiudo controll raster
-             },
-             stop("Enter something that switches me!"))   
-      incProgress(1/length(uuidBand[]), detail = paste("Doing part", i))
+      ## subset solo bande che ci interessano
+      
+      expression.pre<- unique( stringr::str_extract_all(   session$input$indici, "B[018][0-9A]")[[1]] )
+      idx<-(names(terra.vrt)%in%expression.pre)
+      if(sum(idx)<2 || !is.element("SCL", names(terra.vrt))){
+        shinyalert("Problema", "Bande per indice non trovate correttamente in VRT")
+        return()
+      }
+      terra.vrt<-terra.vrt[c(expression.pre, "SCL")]
+    
+      for (poly in 1:nPolygons) {
+   
+        setProgress( i/nr, detail = sprintf(" - Immagine del %s poligono n.%d", date, poly))
+        
+        terra.poly<-terra.polys[poly, ]
+         
+ 
+        terra.vrt.cropped<- terra::mask( terra::crop(terra.vrt, maskPolys[[poly]]), maskPolys[[poly]] )
+        terra.vrt.cropped.masked<-terra.vrt.cropped
+        mYexpression<-gsub("(B[018][0-9A])",   "  terra.vrt.cropped.masked[['\\1']]  " ,    
+                           session$input$indici) 
+        terra.vrt.cropped.index<-eval(parse(text=  mYexpression) )
+         
+        
+        vrt.terra.df<-  na.omit(terra::values(terra.vrt.cropped.index)) 
+        
+        myResult[count, ]<-
+                 c(poly, as.numeric(date), (length(vrt.terra.df)), mean(vrt.terra.df,  na.rm=T), 
+                  quantile(vrt.terra.df, c(0.1,0.25,0.5, 0.75,0.9), na.rm=T), 
+                  min(vrt.terra.df), max(vrt.terra.df) ) 
+        count<-count+1
+      }#chiudo for
     }#chiudo for
   })#chiudo progress
-  
-  #chiudo la connessione
-  closeconnection(conInfo)
-  
+    
   #Controllo che il db sia valorizzato. Se è vuoto do un messaggio di errore e restiusco un dataframe nullo
   if(is.data.frame(myResult) && nrow(myResult)==0){
     shinyalert::shinyalert(title = "Non ci sono dati e non posso calcolare il grafico in questa zona", type = "warning")
   }
-  
-  #unisco i valori ottenuti alla data.
-  mergeDF<- merge(uuidResDate,myResult,by="uuid", all = TRUE) 
-  
-  #ordino dopo il join
-  finalResult<-mergeDF[order(mergeDF$beginposition),]
-  
-  #rimuovo il dataframe inutile
-  rm(mergeDF)
-  rm(myResult)
-  rm(uuidResDate)
-  
-  #arrodtondo
-  finalResult$mean<-round(as.numeric((finalResult$mean)),2)
-  finalResult$stddev<-round(as.numeric((finalResult$stddev)),2)
-  
-  return(finalResult)
+   print(head(myResult))
+  return(myResult)
 }  
 
 #

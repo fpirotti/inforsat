@@ -47,65 +47,81 @@ getDate<-function(start, end){
 
 
 getMyMap<-function(input, nomeIndice,polygonString){
-   
-  x<-c(input$mymap_bounds$west, input$mymap_bounds$east)
-  y<-c(input$mymap_bounds$north,input$mymap_bounds$south)
-  d <- data.frame(lon=x, lat=y) 
   
-  folder<-images.lut[images.lut$dates==input$dayselected, ]$folder
-  jp2.files.10m<-list.files(folder, pattern = "10m\\.jp2$", recursive = T, full.names = T)
-  
-  names(jp2.files.10m)<-  gsub("_", "", 
-       stringr::str_extract_all(   basename(jp2.files.10m), "_[ATBW][O018VC][0-9AIPT]_") )
-  
-  jp2.files.20m<-list.files(folder, pattern = "20m\\.jp2$", recursive = T, full.names = T)
-  
-  names(jp2.files.20m) <-  gsub("_", "", 
-             stringr::str_extract_all(   
-               basename(jp2.files.20m), c("_[SATBW][O018VC][0-9AIPLT]_|_CLDPRB_|_SNWPRB_") ) )
-  
-  
-   
-  jp2.files.20m[["B08"]]<-jp2.files.20m[["B8A"]]
-  r<-terra::rast(jp2.files.20m[[1]])
-  bb<- st_bbox( st_buffer( st_as_sfc( sf::st_bbox( st_transform( 
-    sf::st_as_sf( d, coords=c("lon", "lat"), crs=4326), 
-    crs(r)  ) ) ), 1000) )
-  
-  
-  rm(r)
-   
-  ff<-radio2expression[[ as.integer(input$radio) ]]
-  expression.pre<- unique( stringr::str_extract_all(   ff, "B[018][0-9A]")[[1]] )
-  if( length(expression.pre)==sum(expression.pre%in%names(jp2.files.10m)) ){
-    idx<-which(names(jp2.files.10m)%in%expression.pre)
-    files2take<-jp2.files.10m[idx] 
-  } else {
-    idx<-which(names(jp2.files.20m)%in%expression.pre)
-    files2take<-jp2.files.20m[idx] 
-  }
-  
-  crs <- sf::st_crs(3857)$proj4string
-  croppedBands<-list()
-  for(i in names(files2take)){
-    croppedBands[[i]]<-terra::crop(terra::rast(files2take[[i]]), bb)
-    ## otimizzo, faccio reproject per leaflet solo se composite , 
-    ## in quanto indici diventano un singolo raster e lo faccio dopo
-    if(grepl(",", ff)) { croppedBands[[i]]<-terra::project( croppedBands[[i]], crs)  }
-  }
-  
-  mYexpression<-gsub("(B[018][0-9A])", 
-                     "  croppedBands[['\\1']]  " , 
-                     ff) 
- myMap<-eval(parse(text= paste0("c(", mYexpression, ")")) )
- 
- ## se c'è una virgola è una combinazione tra bande, altrimenti un indice
- if(grepl(",", ff)) {
-    myMap2<-raster::brick(myMap)
- } else {
-   myMap2<-raster( terra::project( myMap, crs) )     
-  }
-  print(myMap2)
+  withProgress(message = 'Cerco le immagini, rimuovo le nuvole e carico la mappa2', value = 0, min=0, max=100, {   
+      x<-c(input$mymap_bounds$west, input$mymap_bounds$east)
+      y<-c(input$mymap_bounds$north,input$mymap_bounds$south)
+      d <- data.frame(lon=x, lat=y) 
+      
+      folder<-images.lut[images.lut$dates==input$dayselected, ]$folder
+      jp2.files.10m<-list.files(folder, pattern = "10m\\.jp2$", recursive = T, full.names = T)
+      
+      names(jp2.files.10m)<-  gsub("_", "", 
+           stringr::str_extract_all(   basename(jp2.files.10m), "_[ATBW][O018VC][0-9AIPT]_") )
+      
+      jp2.files.20m<-list.files(folder, pattern = "20m\\.jp2$", recursive = T, full.names = T)
+      
+      names(jp2.files.20m) <-  gsub("_", "", 
+                 stringr::str_extract_all(   
+                   basename(jp2.files.20m), c("_[SATBW][O018VC][0-9AIPLT]_|_CLDPRB_|_SNWPRB_") ) )
+      
+      
+       
+      jp2.files.20m[["B08"]]<-jp2.files.20m[["B8A"]]
+      r<-terra::rast(jp2.files.20m[[1]])
+      bb<- st_bbox( st_buffer( st_as_sfc( sf::st_bbox( st_transform( 
+        sf::st_as_sf( d, coords=c("lon", "lat"), crs=4326), 
+        crs(r)  ) ) ), 10000) )
+      
+      browser()
+      rm(r)
+       
+      ff<-radio2expression[[ as.integer(input$indici) ]]
+      expression.pre<- unique( stringr::str_extract_all(   ff, "B[018][0-9A]")[[1]] )
+      if( length(expression.pre)==sum(expression.pre%in%names(jp2.files.10m)) ){
+        idx<-which(names(jp2.files.10m)%in%expression.pre)
+        files2take<-jp2.files.10m[idx] 
+      } else {
+        idx<-which(names(jp2.files.20m)%in%expression.pre)
+        files2take<-jp2.files.20m[idx] 
+      }
+      
+      crs <- sf::st_crs(3857)$proj4string
+      croppedBands<-list()
+      tot<-length(names(files2take))
+      n<-0
+      for(i in names(files2take)){
+        n<-n+1
+        setProgress(n/tot*80, message = sprintf("Ritaglio %s", i) )
+      #  Sys.sleep(20)
+        croppedBands[[i]]<-terra::crop(terra::rast(files2take[[i]]), bb)
+        gdalUtils::gdalwarp(files2take[[i]])
+        
+        ## otimizzo, faccio reproject per leaflet solo se composite , 
+        ## in quanto indici diventano un singolo raster e lo faccio dopo
+        if(grepl(",", ff)) { croppedBands[[i]]<-terra::project( croppedBands[[i]], crs)  }
+      }
+      
+      ff<-radio2expression[[ as.integer(input$radio) ]]
+      mYexpression<-gsub("(B[018][0-9A])", 
+                         "  croppedBands[['\\1']]  " , 
+                         ff) 
+       
+     
+     setProgress(85, message = sprintf("Calcolo %s", ff) )
+     myMap<-eval(parse(text= paste0("c(", mYexpression, ")")) )
+     
+     ## se c'è una virgola è una combinazione tra bande, altrimenti un indice
+     
+     setProgress(95, message = "Esporto" )
+     if(grepl(",", ff)) {
+        myMap2<-raster::brick(myMap)
+     } else {
+       myMap2<-raster( terra::project( myMap, crs) )     
+     }
+     setProgress(100, message = "Finito" )
+      
+  } )
   return( myMap2 )
   
   

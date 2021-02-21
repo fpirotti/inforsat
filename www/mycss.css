@@ -50,6 +50,9 @@
 */
 
 
+#shiny-notification-panel {
+  width:50% !important;
+}
 
 #calcola {
 	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #993022), color-stop(1, #cc858e));

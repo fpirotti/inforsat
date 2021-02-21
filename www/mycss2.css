@@ -1,0 +1,22 @@
+#shiny-notification-panel{
+  width:calc( 100vw - 240px );
+  min-width: 300px;
+}
+.content {
+  margin:0 !important;
+  padding:0 !important;
+  
+}
+.irs--shiny .irs-bar {
+  display: none;
+}
+#mymap {    
+ position:absolute  !important;
+ bottom:0 !important;
+ width:100% !important;
+ 
+ height:auto !important;
+ top:110px;
+} 
+   
+

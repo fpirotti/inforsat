@@ -1,0 +1,191 @@
+MAP
+  NAME "CIRGEO-WMS-template"
+  STATUS ON
+  SIZE 400 300
+  EXTENT -2200000 -712631 3072800 3840000
+  UNITS METERS
+  SHAPEPATH "../data"
+  IMAGECOLOR 255 255 255
+  #FONTSET ./www/fonts.txt
+
+  WEB
+    IMAGEPATH "/archivio/tmp/ms_tmp/"
+    IMAGEURL "/ms_tmp/"
+    METADATA
+      "wms_title"          "WMS Mini Server CIRGEO"  ##required
+      "wms_onlineresource" "http://www.cirgeo.unipd.it/cgi-bin/mapserv?"   ##required
+      "wms_srs"            "EPSG:3978 EPSG:4326 EPSG:4269 EPSG:3857"  ##recommended
+      "wms_enable_request" "*"   ##necessary
+      
+            "wcs_label"           "GMap WCS Demo Server" ### required
+      "wcs_description"     "Some text description of the service"
+      "wcs_onlineresource"  "http://www.cirgeo.unipd.it/cgi-bin/mapserv.exe?" ### recommended
+      "wcs_fees"            "none"
+      "wcs_accessconstraints"    "none"
+      "wcs_keywordlist"          "wcs,cirgeo,tesaf"
+      "wcs_metadatalink_type"    "TC211"
+      "wcs_metadatalink_format"  "text/plain"
+      "wcs_metadatalink_href"    "http://www.cirgeo.unipd.it"
+      "wcs_address"              "Viale dellUniversità 16"
+      "wcs_city"                 "Legnaro"
+      "wcs_stateorprovince"      "PD"
+      "wcs_postcode"             "35020"
+      "wcs_country"              "Italy"
+      "wcs_contactelectronicmailaddress" "cirgeo@unipd.it"
+      "wcs_contactperson"            "Francesco Pirotti"
+      "wcs_contactorganization"      "Research"
+      "wcs_contactposition"          "Researcher"
+      "wcs_contactvoicetelephone"    "0498272710"
+      "wcs_service_onlineresource"   "http://www.cirgeo.unipd.it/cgi-bin/mapserv?"
+      "wcs_enable_request"           "*"
+    END
+  END # Web
+
+  PROJECTION
+    "init=epsg:3857"   ##required
+  END
+
+  SYMBOL
+    NAME "circle"
+    TYPE ellipse
+    POINTS 1 1 END
+  END # Symbol
+
+
+  LAYER
+    NAME "100"
+    DATA "nnnnnnnnnnnnnnnnn" 
+    PROCESSING "SCALE=AUTO"
+    METADATA
+      "wms_title"    "RGB Sentinel 2"  ##required
+    END
+    PROJECTION
+      "init=epsg:32632"   ##recommended
+    END
+    PROCESSINGCOMPOSITE
+    PROCESSING "SCALE_1=AUTO"
+    PROCESSING "SCALE_2=AUTO"
+    PROCESSING "SCALE_3=AUTO"
+    PROCESSING "SCALE_4=AUTO"
+    PROCESSINGMASKING
+    TYPE RASTER
+    STATUS ON
+  END
+   
+   
+  LAYER
+    NAME "300"
+    METADATA
+      "wms_title"    "INDEX"  ##required
+    END
+    DATA "IIIIIIIIIIIII"
+    PROJECTION
+      "init=epsg:32632"   ##recommended
+    END  
+    TYPE RASTER
+    STATUS ON
+    CLASS
+      STYLE
+        COLORRANGE  "#0000ff00"  "#0000ffff"
+        DATARANGE  -0.1 0
+      END # STYLE
+      STYLE
+        COLORRANGE  "#0000ffff"  "#ff0000ff"
+        DATARANGE 0 1
+      END # STYLE
+    END # CLASS
+  END
+  
+  
+  LAYER
+    NAME "400"
+    METADATA
+      "wms_title"    "SCL Sentinel 2"  ##required
+    END
+    DATA "sclsclsclscl"
+    PROJECTION
+      "init=epsg:32632"   ##recommended
+    END
+    
+    TYPE RASTER
+    STATUS ON
+    
+    CLASSITEM "[pixel]"
+    # class using simple string comparison, equivalent to ([pixel] = 0)
+    CLASS
+      EXPRESSION "0"
+      STYLE
+        COLOR 0 0 0
+      END
+    END
+    CLASS
+      EXPRESSION "1"
+      STYLE
+        COLOR 250 0 0
+      END
+    END
+    CLASS
+      EXPRESSION "2"
+      STYLE
+        COLOR 100 100 100
+      END
+    END
+    CLASS
+      EXPRESSION "3"
+      STYLE
+        COLOR "#ed940e"
+      END
+    END
+    CLASS
+      EXPRESSION "4"
+      STYLE
+        COLOR "#00d857"
+      END
+    END
+    CLASS
+      EXPRESSION "5"
+      STYLE
+        COLOR "#fffc3c"
+      END
+    END
+    CLASS
+      EXPRESSION "6"
+      STYLE
+        COLOR "#2e53f9"
+      END
+    END
+    CLASS
+      EXPRESSION "7"
+      STYLE
+        COLOR "#666666"
+      END
+    END
+    CLASS
+      EXPRESSION "8"
+      STYLE
+        COLOR "#00d857"
+      END
+    END
+    CLASS
+      EXPRESSION "9"
+      STYLE
+        COLOR "#b3b3b3"
+      END
+    END
+    CLASS
+      EXPRESSION "10"
+      STYLE
+        COLOR "#6ef0ea"
+      END
+    END
+    CLASS
+      EXPRESSION "11"
+      STYLE
+        COLOR "#cc67cb"
+      END
+    END
+  END
+
+
+
+END # Map File
