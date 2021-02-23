@@ -10,13 +10,9 @@
 .irs--shiny .irs-bar {
   display: none;
 }
-#mymap {    
- position:absolute  !important;
- bottom:0 !important;
- width:100% !important;
- 
- height:auto !important;
- top:110px;
-} 
+.sideButtons {
+  color:#000 !important;
+}
+#mymap { height:calc(100vh - 125px) !important; }
    
 

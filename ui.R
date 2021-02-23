@@ -9,6 +9,12 @@ ui <- dashboardPage(
       choices = radio2expression,
       selected = character(0)
     ),
+    div(title="Blocca la scala dell'indice, utile per eseguire confronti", materialSwitch( 
+      inputId = "freezeScale",
+      label = "Fissa scala",
+      status = "primary",
+      right = F
+    ) ),
     selectizeInput(
       "composite",
       label = "Combinazioni bande (da SNAP)",
@@ -30,10 +36,12 @@ ui <- dashboardPage(
       right = F
     ),
     
+    img(id="legendIndex", style="width:100%;"),
      
     actionButton("aggiorna", "Aggiorna la mappa"),
     actionButton("calcola", "Calcola il grafico") ,
-    downloadButton("scaricaPoligoni", "Scarica Poligoni")
+    downloadButton("scaricaPoligoni", "Scarica Poligoni"),
+    downloadButton("scaricaIndice", "Raster Indice")
     
   ),
   dashboardBody( 
@@ -41,13 +49,14 @@ ui <- dashboardPage(
     shinyjs::useShinyjs(),
     
     
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fshf"),
     # Application title
     #theme = "solar_bootstrap.css",
     div( title=sprintf(
       "Scegli giorno (%d immagini disponibili)",
       length(images.lut$dates)
     ), id="topMostSlider",
-      style = "margin:0px 15px; position:relative; z-index:9999; padding:5px 15px",
+      style = "margin:0 0; position:relative; width:100%;   padding:0px 0px",
       shinyWidgets::sliderTextInput(
         "dayselected",
         width = "100%",
@@ -56,34 +65,37 @@ ui <- dashboardPage(
         grid = TRUE
       )
     ),
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=daeks"),
     
-    leaflet::leafletOutput("mymap"),
     
     jqui_draggable( 
-      shinydashboardPlus::boxPlus(
-        title = HTML(paste0(icon("gears"), " Analytics")), 
-        closable = TRUE, 
-        collapsed = T,
-        enable_label = T,
+     # fixedPanel(top = 5, left=280,  draggable = T, 
+     #               style="z-index:99999; width:250px",
+     #               
+      div(style="position:absolute;z-index:999999999; width:calc( 100vw - 300px ); top:5px; left:290px;", 
+       shinydashboardPlus::boxPlus(
+        title = HTML(paste0(icon("gears"), " Analytics                ")), 
+        closable = TRUE,  width="100%",
+        collapsed = F,
+        enable_label = T, 
         label_text = "",
         label_status = "danger",
         status = "warning",
         solidHeader = TRUE,
         collapsible = TRUE, 
-        plotlyOutput("graph1" , width=400, height = 500)
+        plotlyOutput("graph1" )
+      ) 
       ),
       options = list(
         cursor = "move",
         zIndex = 99999999999,
-        stack = "#topMostSlider",
+        stack = ".container",
         opacity = 0.5,
-        handle = ".box-header" ,  
-        stop= "function() {
-          alert();
-        }"
+        handle = ".box-header"
       )
-    )
+    ),
+    
+    leaflet::leafletOutput("mymap"),
+    
   )
   
 )

@@ -54,7 +54,10 @@ MAP
 
   LAYER
     NAME "100"
-    DATA "nnnnnnnnnnnnnnnnn" 
+    
+    ##--- RGB START
+    ##--- RGB END
+    
     PROCESSING "SCALE=AUTO"
     METADATA
       "wms_title"    "RGB Sentinel 2"  ##required
@@ -62,12 +65,17 @@ MAP
     PROJECTION
       "init=epsg:32632"   ##recommended
     END
-    PROCESSINGCOMPOSITE
+    ##--- PROCESSINGCOMPOSITE START
+    ##--- PROCESSINGCOMPOSITE END
+    
+    ##--- PROCESSINGMASKING START
+    ##--- PROCESSINGMASKING END
+    
     PROCESSING "SCALE_1=AUTO"
     PROCESSING "SCALE_2=AUTO"
     PROCESSING "SCALE_3=AUTO"
     PROCESSING "SCALE_4=AUTO"
-    PROCESSINGMASKING
+    
     TYPE RASTER
     STATUS ON
   END
@@ -78,22 +86,18 @@ MAP
     METADATA
       "wms_title"    "INDEX"  ##required
     END
-    DATA "IIIIIIIIIIIII"
+    ##--- INDEX START
+    ##--- INDEX END
     PROJECTION
-      "init=epsg:32632"   ##recommended
+      "init=epsg:3857"   ##recommended
     END  
     TYPE RASTER
     STATUS ON
-    CLASS
-      STYLE
-        COLORRANGE  "#0000ff00"  "#0000ffff"
-        DATARANGE  -0.1 0
-      END # STYLE
-      STYLE
-        COLORRANGE  "#0000ffff"  "#ff0000ff"
-        DATARANGE 0 1
-      END # STYLE
-    END # CLASS
+    PROCESSING "RANGE_COLORSPACE=HSL"
+    ##########&&&&&&&
+
+
+    ##########&&&&&&&
   END
   
   
@@ -102,7 +106,8 @@ MAP
     METADATA
       "wms_title"    "SCL Sentinel 2"  ##required
     END
-    DATA "sclsclsclscl"
+    ##--- SCL START
+    ##--- SCL END
     PROJECTION
       "init=epsg:32632"   ##recommended
     END

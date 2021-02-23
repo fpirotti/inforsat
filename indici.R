@@ -31,14 +31,15 @@ getIndice <- function(session, myPolygons){
   npixels<-as.integer(sum(area)/400)
   nPolygons<-nrow(myPolygons)
   nr<-nrow(images.lut)
-  columns<-c("FID", "Date",  "n","mean","10%","25%" ,"50%","75%","90%", "max", "min")
+  
+  columns<-c("FID", "Date",  "n","mean","q10","q25" ,"q50","q75","q90", "max", "min")
   myResult<-setNames(data.frame(matrix(ncol = length(columns), nrow = nPolygons*nr)), 
                      columns)
   ## prendo uno per fare pre processing di alcune operazioni sui poligoni
   ## ed evitare che vengano rifatte nel loop
   vrt<-file.path(images.lut[1, ]$folder, "mapservVRT_20m.vrt")
   terra.vrt<- terra::rast(vrt)
-  terra.polys<-terra::vect( as_Spatial( st_transform( myPolygons, crs(vrt) ) ) ) 
+  terra.polys<-terra::vect( as_Spatial( st_transform( myPolygons, crs(terra.vrt) ) ) ) 
  
   maskPolys<-list()
   for (poly in 1:nPolygons) {
@@ -58,19 +59,19 @@ getIndice <- function(session, myPolygons){
         return()
       }
       terra.vrt<- terra::rast(vrt)
-      names(terra.vrt)<-images.lut[i, ]$bands[[1]]
-      if(is.null(terra.vrt$B08)) terra.vrt$B08<-terra.vrt$B8A
+    
+      bands.in.image<-images.lut[i, "bands"][[1]]
       
       ## subset solo bande che ci interessano
       
-      expression.pre<- unique( stringr::str_extract_all(   session$input$indici, "B[018][0-9A]")[[1]] )
-      idx<-(names(terra.vrt)%in%expression.pre)
-      if(sum(idx)<2 || !is.element("SCL", names(terra.vrt))){
+      expression.pre<- unique( c("SCL", stringr::str_extract_all(   session$input$indici, "B[018][0-9A]")[[1]] ))
+      idx<-(names(bands.in.image)%in%expression.pre)
+      if(sum(idx)<2 || !is.element("SCL", names(bands.in.image))){
         shinyalert("Problema", "Bande per indice non trovate correttamente in VRT")
         return()
       }
-      terra.vrt<-terra.vrt[c(expression.pre, "SCL")]
-    
+      terra.vrt<-terra.vrt[[ as.integer(bands.in.image[expression.pre]) ]]
+      names(terra.vrt)<-expression.pre
       for (poly in 1:nPolygons) {
    
         setProgress( i/nr, detail = sprintf(" - Immagine del %s poligono n.%d", date, poly))
@@ -99,8 +100,7 @@ getIndice <- function(session, myPolygons){
   #Controllo che il db sia valorizzato. Se è vuoto do un messaggio di errore e restiusco un dataframe nullo
   if(is.data.frame(myResult) && nrow(myResult)==0){
     shinyalert::shinyalert(title = "Non ci sono dati e non posso calcolare il grafico in questa zona", type = "warning")
-  }
-   print(head(myResult))
+  }  
   return(myResult)
 }  
 

@@ -45,7 +45,6 @@ get20mBandNames<-function(path){
   rasters.start<-list.files(path, "_20m.jp2$", recursive=T, full.names = T)
   bands<-gsub(".*_([ABTCSVW][0-9OCLINV][LPSWTVDI0-9A])_20m.jp2$", "\\1", basename(rasters.start))
   bands<-as.list(structure(1:length(bands), names=bands))
-  browser()
   if(!is.element("B08", names(bands) ) ){
     bands[["B08"]]<- which(names(bands)=="B8A")
   }
@@ -64,13 +63,15 @@ makeVRT<-function(path){
   c(vrt,rasters.scl)
 }
 
-compositeCreate<-function(session, onlyVRT=F){
+
+compositeCreate<-function(session  ){
   
   masking<-processingMasking[ as.integer(session$input$mskCld)+1, as.integer(session$input$mskSnow)+1 ]
   dateImage <- as.character(session$input$dayselected)
   composite <- session$input$composite
   
-  mapserv.template<-readr::read_file("mapservTemplate.map")
+  if(!file.exists(session$userData$mapfile)){ initMapfile(session) }
+  mapserv.template<-readr::read_file(session$userData$mapfile)
   
   if(composite==1) composite<-processingComposite[[1]]
   if(is.null(dateImage)){
@@ -80,33 +81,48 @@ compositeCreate<-function(session, onlyVRT=F){
   }
   vrt<-makeVRT(last.date$folder)
   #if(!file.exists(vrt[[1]])) 
-  
-  
-  if(onlyVRT) return()
+   
   
   ## index file is global in server
-  indexfile<<- file.path(pathsTemp, sprintf("%s.tif", session$token))
-  mapserv.template<-gsub("nnnnnnnnnnnnnnnnn", vrt[[1]], mapserv.template)
-  mapserv.template<-gsub("IIIIIIIIIIIII", indexfile, mapserv.template)
+ 
+  mapserv.template<-gsub("##--- RGB START.*##--- RGB END",   
+                  paste0("##--- RGB START\n     DATA \"", vrt[[1]], "\"\n   ##--- RGB END"),  
+                  mapserv.template)
+  mapserv.template<-gsub("##--- INDEX START.*##--- INDEX END", 
+                         paste0("##--- INDEX START\n    DATA \"", session$userData$indexfile, "\"\n   ##--- INDEX END"),  
+                         mapserv.template)
   
-  mapserv.template<-gsub("sclsclsclscl", vrt[[2]], mapserv.template)
-  mapserv.template<-gsub("PROCESSINGCOMPOSITE", composite, mapserv.template)
-  mapserv.template<-gsub("PROCESSINGMASKING", masking, mapserv.template)
+  mapserv.template<-gsub("##--- SCL START.* ##--- SCL END", 
+                         paste0("##--- SCL START\n    DATA \"", vrt[[2]], "\"\n     ##--- SCL END"),  
+                         mapserv.template)
   
   
+  mapserv.template<-gsub("##--- PROCESSINGCOMPOSITE START.*##--- PROCESSINGCOMPOSITE END",   
+                         paste0("##--- PROCESSINGCOMPOSITE START\n    ", composite, "\n  ##--- PROCESSINGCOMPOSITE END"),  
+                         mapserv.template)
+  mapserv.template<-gsub("##--- PROCESSINGMASKING START.*##--- PROCESSINGMASKING END",   
+                         paste0("##--- PROCESSINGMASKING START\n    ", masking, "\n  ##--- PROCESSINGMASKING END"),  
+                         mapserv.template)
+   
+  
+  print("Qui")
+
+  
+  readr::write_file(mapserv.template, session$userData$mapfile )
+  sprintf("https://www.cirgeo.unipd.it/cgi-bin/mapserv?map=%s", 
+           session$userData$mapfile)
+}
+ 
+initMapfile<-function(session){
   if(!dir.exists(pathsTemp)){
     dir.create(pathsTemp, recursive = T, mode = "0777")
     Sys.chmod(pathsTemp, mode = "0777", use_umask = TRUE)
     Sys.umask(mode = NA)
   }
-  
-  mapfile  <- file.path(pathsTemp, sprintf("%s.map", session$token))
-  readr::write_file(mapserv.template, mapfile )
-  sprintf("https://www.cirgeo.unipd.it/cgi-bin/mapserv?cache=%s&map=%s", Sys.time(), mapfile)
+  mapserv.template<-readr::read_file("mapservTemplate.map")
+  readr::write_file(mapserv.template, session$userData$mapfile )
 }
- 
-
-###  OGGETTO LEAFLET DA METTERE SU SERVER.R
+###  OGGETTO LEAFLET DA METTERE SU SERVER.R ------
 leaflet.object <-
   leaflet()%>%
   
@@ -145,10 +161,45 @@ leaflet.object <-
   # leaflet.extras::addStyleEditor(position = "topleft", 
   #                                openOnLeafletDraw = TRUE)%>%
   
-  enableMeasurePath()%>%
+  #enableMeasurePath()%>%
   
   leaflet.extras::addMeasurePathToolbar()%>%
   
   leaflet::addScaleBar("bottomleft")%>%
   
-  leaflet::setView( lng=11.970140, lat=46.349963, zoom = 12) 
+  leaflet::setView( lng=11.970140, lat=46.349963, zoom = 12)  
+
+
+
+### FUNZIONI --------
+
+updateMap<-function(session){
+  leaflet::leafletProxy('mymap') %>%
+    leaflet::clearGroup(group='Color Composite')%>% 
+    leaflet::clearGroup(group='INDICE')%>%
+    leaflet::clearGroup(group='Scene Classification')%>%
+    
+    addWMSTiles(
+      session$userData$wms.url,
+      group="Color Composite",
+      layers = "100", 
+      options = WMSTileOptions( format = "image/png", transparent = T, 
+                                cache=as.character(Sys.time())  ),
+      attribution = "Pirotti")  %>%
+    
+    addWMSTiles(
+      session$userData$wms.url,
+      group="INDICE",
+      layers = "300", 
+      options = WMSTileOptions( format = "image/png", transparent = T, 
+                                cache=as.character(Sys.time())  ),
+      attribution = "Pirotti")  %>%
+    
+    addWMSTiles(
+      session$userData$wms.url,
+      group="Scene Classification",
+      layers = "400", 
+      options = WMSTileOptions(format = "image/png", transparent = T, 
+                               cache=as.character(Sys.time())  ),
+      attribution = "Pirotti")   
+}

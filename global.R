@@ -1,10 +1,10 @@
-source("functions_rgdal.R")
-source("functions_evolut.R")
+
 source("dbcon.R")
 source("indici.R")
-source("mappe.R")
-source("counter.R")
-
+source("mappe.R") 
+source("functions_rgdal.R")
+source("functions_evolut.R")
+library(plotly)
 ## absolute path with all S2 images
 image.folder<-"/archivio/esa/s2"
 load("data.rda")
@@ -26,6 +26,7 @@ update.Images<-function(forceVRT=F){
 
 update.Images()
 
-radio2expression<- list( "NDVI" = "(B08-B04)/(B08+B04)", "RGI" = "B04/B03", 
+radio2expression<- list( "NDVI" = "(B08-B04)/(B08+B04)", 
+                         "RGI" = "B04/B03", 
                          "NDMI" = "(B08-B11)/(B08+B11)" )
 

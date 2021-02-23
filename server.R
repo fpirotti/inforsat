@@ -2,9 +2,20 @@
 
 server <- function(input, output, session) {
   
-  
+  shinyjs::hide("scaricaIndice")
+  shinyjs::hide("scaricaPoligoni")
+  shinyjs::addCssClass(id="scaricaIndice", "sideButtons")
+  shinyjs::addCssClass(id="scaricaPoligoni", "sideButtons")
   #questi servono per estrarre il valore dagli event e observe event
-  indexfile<-NULL
+  
+  reacts<- reactiveValues( table.index=NULL,  IS.LOGGED=F, IS.UNIPD=F)
+  
+  
+  
+  
+  session$userData$indexfile <- file.path(pathsTemp, sprintf("%s.tif", session$token))
+  session$userData$mapfile   <- file.path(pathsTemp, sprintf("%s.map", session$token))
+  
   myPolygons<-NULL
   outIndexFile<- file.path(pathsTemp, sprintf("%s.", session$token) )
   img <- "img/logow.png"
@@ -19,6 +30,22 @@ server <- function(input, output, session) {
     leaflet.object  
   })#chiudo output mymap  
   
+  
+  output$graph1 <- renderPlotly({ 
+    req(reacts$table.index)
+    tb<-reacts$table.index
+    tb$Date<-as.Date(tb$Date,  origin = "1970-01-01")
+    tb$FID<-as.factor(tb$FID)
+    p <- ggplot( tb, aes_string(x="Date", y="q50", color="FID" )  )
+    p <- p + geom_crossbar(aes_string(ymin = "q25", ymax = "q75") )
+    p <- p + geom_point(aes(x=Date, y=mean) )
+    p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90") )
+    ggplotly(p)
+  })
+  #observer del bottone che mostra il pannello dei controlli/risultati
+  observeEvent(reacts$table.index, {
+    print("SDFSDFSDFDSFDSDF")
+    })
   #observer del bottone che mostra il pannello dei controlli/risultati
   observeEvent(input$showBtn1, {
     shinyjs::toggle('controlli1')})
@@ -33,35 +60,12 @@ server <- function(input, output, session) {
     input$composite
     input$dayselected }, {
        
-      wms.url<- compositeCreate(session)
+      session$userData$wms.url<- compositeCreate(session)
       
-        
-      leaflet::leafletProxy('mymap') %>%
-        leaflet::clearGroup(group='Color Composite')%>% 
-        leaflet::clearGroup(group='INDICE')%>%
-        leaflet::clearGroup(group='Scene Classification')%>%
-      
-        addWMSTiles(
-          wms.url,
-          group="Color Composite",
-          layers = "100", 
-          options = WMSTileOptions( format = "image/png", transparent = T  ),
-          attribution = "Pirotti")  %>%
-         
-        addWMSTiles(
-          wms.url,
-          group="INDICE",
-          layers = "300", 
-          options = WMSTileOptions( format = "image/png", transparent = T  ),
-          attribution = "Pirotti")  %>%
-        
-        addWMSTiles(
-          wms.url,
-          group="Scene Classification",
-          layers = "400", 
-          options = WMSTileOptions(format = "image/png", transparent = T  ),
-          attribution = "Pirotti")   
-    })
+      #createIndexFile(session)
+      updateMap(session)
+      createIndexFile(session)
+    }, ignoreInit = T )
   
   
 
@@ -97,7 +101,7 @@ server <- function(input, output, session) {
     text="<div style='text-align: justify;'>
     Marco Piragnolo (sviluppo piattaforma e telerilevamento)
     <a href = 'mailto: marco.piragnolo@unipd.it'>Email</a>
-    Francesco Pirotti (ottimizzazione telerilevamento)
+    Francesco Pirotti (ottimizzazione algoritmi telerilevamento)
     <a href = 'mailto: francesco.pirotti@unipd.it'>Email</a>
     </div>", 
     type = "info")})
@@ -114,24 +118,31 @@ server <- function(input, output, session) {
     } else {
       myPolygons <<- rbind(myPolygons, geojson_sf(jsonify::to_json(gc, unbox = T)))
     }
-   
+    
   })
   
+  ### SCARICA POLIGONI -----
   output$scaricaPoligoni <- downloadHandler(
     filename = function() {
-      file.path(pathsTemp, sprintf("%s.gpkg", session$token))
+       sprintf("%s.gpkg", session$token)
     },
     content = function(file) {
-      if(length(myPolygons)==0){
-        shinyalert::shinyalert(title = "Devi disegnare almeno un poligono", type = "warning")
-        return()
-      }
       st_write(myPolygons,  file, append=F  )
     }
   )
   
-
  
+
+  ### SCARICA RASTER -----
+  output$scaricaIndice <- downloadHandler(
+    filename = function() { 
+      sprintf("%s.tif", session$token)
+    },
+    content = function(file) { 
+      file.copy(session$userData$indexfile, file, overwrite = T)
+    }
+  )
+
   
    
   #OBSERVE CALCOLA GRAFICO indici osservando evento del pulsante calcola
@@ -139,47 +150,29 @@ server <- function(input, output, session) {
   observeEvent(input$calcola,{
     
     #faccio un controllo se il poligono è disegnato
-    if(length(myPolygons)==0){shinyalert::shinyalert(title = "Devi disegnare un poligono per calcolare il grafico", type = "warning")}
+    if(length(myPolygons)==0){
+      shinyalert::shinyalert(title = "Devi disegnare un poligono per calcolare il grafico", 
+                             type = "warning")
+      return()
+      }
 
     else{
       #apro il pannello risultati
       shinyjs::show("risultati")
- 
-      scaricaDati<-getIndice(session, myPolygons)
       
+
+      reacts$table.index<-getIndice(session, myPolygons)
+      tb<-isolate(  reacts$table.index )
+      if(!is.null(tb) && nrow(tb)==nrow(myPolygons)){
+        
+        shinyalert::shinyalert(title = "Nessun risultato", 
+                               type = "warning")
+        return()
+        
+      }
       
- 
-      
-      output$plot1 <- shiny::renderPlot({
- 
-      })
-      
-      updateContatore("grafico")
+      shinyjs::show("scaricaIndice")
        
-      output$downloadData <- downloadHandler(
-        updateContatore("downdati"),
-        
-        filename = function() {
-          #paste(nomeAnalisi[as.numeric(nomeIndice)], ".csv", sep = "")
-          paste(analisi, ".csv", sep = "")
-        },
-        content = function(file) {
-          write.csv(scaricaDati, file, row.names = FALSE)
-        }
-      )
-      
-      output$downloadPlot <- downloadHandler(
-        updateContatore("downgrafico"),
-        
-        filename = function() { 
-          paste("plot", '.png', sep='') 
-        },
-        content = function(file) {
-          device <- function(..., width, height) grDevices::png(..., width = width, height = height, res = 300, units = "in")
-          
-          ggplot2::ggsave(file, scaricaGrafico, device = device)
-        }
-      )
     }#chiudo else
   })
   
@@ -188,19 +181,14 @@ server <- function(input, output, session) {
   ### AGGIORNA -----
   observeEvent(input$aggiorna,{
     createIndexFile(session)
-    mYexpression<-gsub("(B[018][0-9A])",   "  terra.vrt.cropped.masked[['\\1']]  " , session$input$indici) 
   })
   
-   
-  #Output testuale del grafico
-  # output$info <- renderText({
-  #   paste0("x=", as.Date(as.numeric(input$plot_click$x), origin="1970-01-01"), "\ny=", round(as.numeric( input$plot_click$y,5),2))
-  # })
-  
+    
   
   ### FINISCE SESSIONE  -----
   session$onSessionEnded(function() {
-    mapfiles<-list.files(pathsTemp, sprintf("%s*", session$token),  full.names = T)
+    mapfiles<-list.files(pathsTemp, sprintf("%s.*", session$token),  full.names = T)
+    print(mapfiles)
     file.remove(mapfiles)
   })
   
