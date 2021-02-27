@@ -1,15 +1,8 @@
-require(terra)
 
-
-calcMapserverScale4index<-function(session, r){
-  qq<- quantile(r[], probs = seq(0,1, by=0.1), 
-                names = FALSE, na.rm=T )
-  
-  print("calcMapserverScale")
-  
-  qq.color<-RColorBrewer::brewer.pal( length(qq),"Spectral")
+create4mapserver <- function(session, qq, qq.color){
   
   colscale<-c()
+  
   for(i.color in rev(1:(length(qq)-1)) ){
     colscale<-c(colscale, sprintf("
   CLASS
@@ -18,13 +11,13 @@ calcMapserverScale4index<-function(session, r){
       COLORRANGE  \"%s\"  \"%s\"
       DATARANGE %f %f
     END # STYLE                   
-  END #CLASS", qq[[i.color]], 
-                                  qq[[i.color+1]],
-                                  qq.color[[i.color]], 
-                                  qq.color[[(i.color+1)]], 
-                                  qq[[i.color]], 
-                                  qq[[i.color+1]]
-    ) 
+  END #CLASS",  qq[[i.color]], 
+                qq[[i.color+1]],
+                qq.color[[i.color]], 
+                qq.color[[(i.color+1)]], 
+                qq[[i.color]], 
+                qq[[i.color+1]]
+      ) 
     )
   }
   
@@ -51,7 +44,7 @@ calcMapserverScale4index<-function(session, r){
     
     leaflet::clearGroup(group='INDICE') %>%
     leaflet::removeControl('myLegend') %>% 
-    leaflet::showGroup(group='INDICE') %>%
+    #leaflet::showGroup(group='INDICE') %>%
     addWMSTiles(
       session$userData$wms.url,
       group="INDICE",
@@ -63,6 +56,26 @@ calcMapserverScale4index<-function(session, r){
       colors = rgb(t(col2rgb(qq.color)) / 255),
       labels = sprintf("%.2f", qq), opacity = 1,
       layerId = "myLegend")
+  
+}
+
+fixedScale4index<-function(session, r, index="NDVI"){
+  qq <- c(-1, seq(0,1, by=0.1) )
+  qq.color<-c('#0000FF', '#c7eae5', '#a50026','#d73027','#f46d43','#fdae61','#fee08b','#d9ef8b','#a6d96a','#66bd63','#1a9850','#006837')
+  create4mapserver(session, qq, qq.color)
+  
+}
+
+calcMapserverScale4index<-function(session, r){
+  
+  qq<- quantile(r[], probs = seq(0,1, by=0.1), 
+                names = FALSE, na.rm=T )
+  
+  print("calcMapserverScale")
+  
+  qq.color<-RColorBrewer::brewer.pal( length(qq),"Spectral")
+  
+  create4mapserver(session, qq, qq.color)
   
   
 }
@@ -103,13 +116,15 @@ createIndexFile<-function(session){
         return()
       }
  
-      res<-0.149*2^(21-session$input$mymap_zoom)
-      if(res<20) res<-20
+      res<-0.149*2^(21 - session$input$mymap_zoom)
+       
+      if(res<20) res<-20 
+      
       outRaster<-sprintf("%s/%s_%s.tif", pathsTemp, session$token, ii.init)
       gdalUtils::gdalwarp(
         ii[[1]],
         outRaster,
-        r = "near",
+        r = "bilinear",
         te = as.numeric(session$input$mymap_bounds[ c(4,3,2,1)]),
         te_srs = (st_crs(4326))$proj4string ,
         t_srs = st_crs(3857)$proj4string,
@@ -121,26 +136,50 @@ createIndexFile<-function(session){
     }
     
     
+    shinyjs::runjs( sprintf(' $("#infolog").append("<P>Risoluzione %d");', as.integer(res) ) )
+    
     setProgress((cc+1)/(length(bands2use)+3), detail = sprintf("Calcolo %s", session$input$indici) )
     
     mYexpression<-gsub("(B[018][0-9A])",   "  bands.raster[['\\1']]  " ,    
                        session$input$indici) 
     r<-eval(parse(text=  mYexpression) )
-
+    masks<-NULL
+    if(isTruthy(session$input$mskCld) && session$input$mskCld!=0 ){
+      
+      outRaster<-sprintf("%s/%s_CLD.tif", pathsTemp, session$token, ii.init)
+      gdalUtils::gdalwarp(
+        bands$CLD$fpath,
+        outRaster,
+        te = as.numeric(session$input$mymap_bounds[ c(4,3,2,1)]),
+        te_srs = (st_crs(4326))$proj4string ,
+        t_srs = st_crs(3857)$proj4string,
+        tr = c(res,res),
+        overwrite = T
+      )
+      r<-  terra::mask(r,   (terra::rast(outRaster) > session$input$mskCld), maskvalues=1)
+    }
+    
+    if(isTruthy(session$input$mskSnw)&& session$input$mskSnw!=0 ){
+      
+      outRaster<-sprintf("%s/%s_SNW.tif", pathsTemp, session$token, ii.init)
+      gdalUtils::gdalwarp(
+        bands$SNW$fpath,
+        outRaster,
+        te = as.numeric(session$input$mymap_bounds[ c(4,3,2,1)]),
+        te_srs = (st_crs(4326))$proj4string ,
+        t_srs = st_crs(3857)$proj4string,
+        tr = c(res,res),
+        overwrite = T
+      ) 
+      r<-  terra::mask(r,   (terra::rast(outRaster) > session$input$mskCld), maskvalues=1 )
+    }
+    
   setProgress((cc+2)/(length(bands2use)+3), detail = sprintf("Scrivo...") )
   terra::writeRaster(r, session$userData$indexfile, datatype="FLT4S", overwrite = T )
   
   if(session$input$freezeScale){
-    leaflet::leafletProxy('mymap') %>% 
-      leaflet::clearGroup(group='INDICE') %>% 
-      leaflet::showGroup(group='INDICE') %>%
-      addWMSTiles(
-        session$userData$wms.url,
-        group="INDICE",
-        layers = "300", 
-        options = WMSTileOptions( format = "image/png", transparent = T, 
-                                  cache=as.character(Sys.time())  ),
-        attribution = "CIRGEO-TESAF") 
+    
+    fixedScale4index(session,r)
     return()
   }
   

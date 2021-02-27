@@ -193,4 +193,44 @@ MAP
 
 
 
+  LAYER
+    NAME "500"
+    METADATA
+      "wms_title"    "CLOUDPROB"  ##required
+    END
+    ##--- CLOUDPROB PLACEMARK
+    PROJECTION
+      "init=epsg:32632"   ##recommended
+    END  
+    TYPE RASTER
+    STATUS ON 
+    CLASS
+      STYLE
+        COLORRANGE  "#ffffff00"  "#ff0000"
+        DATARANGE 0 1
+      END # STYLE                   
+    END #CLASS
+  END
+ 
+
+  LAYER
+    NAME "600"
+    METADATA
+      "wms_title"    "SNOWPROB"  ##required
+    END
+    ##--- SNOWPROB PLACEMARK
+    PROJECTION
+      "init=epsg:32632"   ##recommended
+    END
+    TYPE RASTER
+    STATUS ON 
+    CLASS
+      STYLE
+        COLORRANGE  "#ffffff00"  "#0000FF"
+        DATARANGE 0 1
+      END # STYLE                   
+    END #CLASS
+  END
+ 
+
 END # Map File

@@ -37,15 +37,16 @@ getIndice <- function(session, myPolygons){
                      columns)
   ## prendo uno per fare pre processing di alcune operazioni sui poligoni
   ## ed evitare che vengano rifatte nel loop
-  vrt<-file.path(images.lut[1, ]$folder, "mapservVRT_20m.vrt")
+  vrt<-images.lut[1, ]$VRT
   terra.vrt<- terra::rast(vrt)
   terra.polys<-terra::vect( as_Spatial( st_transform( myPolygons, crs(terra.vrt) ) ) ) 
  
   maskPolys<-list()
   for (poly in 1:nPolygons) {
-    maskPolys[[poly]]<-terra::rasterize( terra.polys[poly, ], terra::crop(terra.vrt, terra.polys[poly, ]) )
+    maskPolys[[poly]]<-terra::rasterize( terra.polys[poly, ], 
+                                         terra::crop(terra.vrt, terra.polys[poly, ]) )
   }
-  
+  rm(terra.vrt)
   shiny::withProgress(message =  sprintf("Analizzo: TOT=%d pixel (20m) nei poligoni", npixels), value = 0, {  
     #ciclo su ogni granule
       #terra::crop( terra::rast() ) 
@@ -53,24 +54,26 @@ getIndice <- function(session, myPolygons){
     count<-1
     for (i in 1:nr) {
       date<- (images.lut[i, ]$dates)
-      vrt<-file.path(images.lut[i, ]$folder, "mapservVRT_20m.vrt")
+      vrt<-images.lut[i, ]$VRT
       if( !file.exists(vrt) ){
         shinyalert("VRT non trovato", "Contatta assistenza")
         return()
       }
       terra.vrt<- terra::rast(vrt)
     
-      bands.in.image<-images.lut[i, "bands"][[1]]
+      bands.in.image<-
+        sapply( images.lut[i, "bands"][[1]], '[[', "idx")
+      
       
       ## subset solo bande che ci interessano
-      
-      expression.pre<- unique( c("SCL", stringr::str_extract_all(   session$input$indici, "B[018][0-9A]")[[1]] ))
+      expression.pre<- unique( c("CLD", "SNW", stringr::str_extract_all(   session$input$indici, "B[018][0-9A]")[[1]] ))
       idx<-(names(bands.in.image)%in%expression.pre)
-      if(sum(idx)<2 || !is.element("SCL", names(bands.in.image))){
+      if(sum(idx)<4 ){
         shinyalert("Problema", "Bande per indice non trovate correttamente in VRT")
         return()
       }
-      terra.vrt<-terra.vrt[[ as.integer(bands.in.image[expression.pre]) ]]
+      
+      terra.vrt<-terra.vrt[[ as.integer( bands.in.image[expression.pre] ) ]]
       names(terra.vrt)<-expression.pre
       for (poly in 1:nPolygons) {
    
@@ -86,7 +89,20 @@ getIndice <- function(session, myPolygons){
         terra.vrt.cropped.index<-eval(parse(text=  mYexpression) )
          
         
-        vrt.terra.df<-  na.omit(terra::values(terra.vrt.cropped.index)) 
+        msk<-terra::rast(terra.vrt.cropped.index)
+        if(session$input$mskCld){
+          terra.vrt.cropped.index.msk<-terra::mask(terra.vrt.cropped.index,
+                                               terra.vrt.cropped$CLD )
+        } 
+        if( session$input$mskSnw ){
+          terra.vrt.cropped.index.msk<-terra::mask(terra.vrt.cropped.index,
+                                                   terra.vrt.cropped$CLD )
+        } 
+        
+        
+        vrt.terra.df<-  terra::values(terra.vrt.cropped.index)
+     
+         
         
         myResult[count, ]<-
                  c(poly, as.numeric(date), (length(vrt.terra.df)), mean(vrt.terra.df,  na.rm=T), 

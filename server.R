@@ -46,19 +46,26 @@ server <- function(input, output, session) {
   observeEvent(reacts$table.index, {
     print("SDFSDFSDFDSFDSDF")
     })
-  #observer del bottone che mostra il pannello dei controlli/risultati
-  observeEvent(input$showBtn1, {
-    shinyjs::toggle('controlli1')})
+ 
   
   observeEvent(input$showBtn2, {
     shinyjs::toggle('risultati')})
   
+  observeEvent(input$leafletRendered, { 
+    
+    updateBox( "myBox", action ="toggle")   
+    shinyjs::runjs(" 
+                     $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
+                     $('.leaflet-control-layers-overlays').children().after('<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"   id=\"myRange\"><hr>'); ")
+  })
   ### Cambio impostazioni layers ----
   observeEvent({
     input$mskCld
-    input$mskSnow
+    input$mskSnw
     input$composite
-    input$dayselected }, {
+    input$dayselected
+    input$freezeScale
+    input$indici }, {
        
       session$userData$wms.url<- compositeCreate(session)
       

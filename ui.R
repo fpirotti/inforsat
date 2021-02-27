@@ -1,55 +1,78 @@
 # Define UI for application that draws a histogram
 #,
-ui <- dashboardPage(
-  dashboardHeader(   ),
-  dashboardSidebar(
-    selectizeInput(
-      "indici",
-      label = "Indici",
-      choices = radio2expression,
-      selected = character(0)
-    ),
-    div(title="Blocca la scala dell'indice, utile per eseguire confronti", materialSwitch( 
-      inputId = "freezeScale",
-      label = "Fissa scala",
-      status = "primary",
-      right = F
-    ) ),
-    selectizeInput(
-      "composite",
-      label = "Combinazioni bande (da SNAP)",
-      choices = processingComposite,
-      selected = character(0)
-    ),
-    
-    materialSwitch(
-      inputId = "mskCld",
-      label = "Filtra Nuvole",
-      status = "primary",
-      right = F
-    ),
-    
-    materialSwitch(
-      inputId = "mskSnow",
-      label = "Filtra Neve",
-      status = "primary",
-      right = F
-    ),
-    
-    img(id="legendIndex", style="width:100%;"),
+library(shinydashboardPlus)
+ui <-  dashboardPage(
+  header = dashboardHeader( ), 
+  sidebar=dashboardSidebar (
+    div(id="legendPlaceholder", style="padding:5px;")
      
-    actionButton("aggiorna", "Aggiorna la mappa"),
-    actionButton("calcola", "Calcola il grafico") ,
-    downloadButton("scaricaPoligoni", "Scarica Poligoni"),
-    downloadButton("scaricaIndice", "Raster Indice")
+  ),
+  
+  controlbar = dashboardControlbar(
+    controlbarMenu(
+      id = "cb_menu",
+      controlbarItem(
+        "Menus",
+        selectizeInput(
+          "indici",
+          label = "Indici",
+          choices = radio2expression,
+          selected = character(0)
+        ), 
+        
+        div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", materialSwitch( 
+          inputId = "freezeScale",
+          label = "Scala fissa",
+          status = "primary",
+          right = F
+        ) ),
+        
+        div(title="dddd", numericInput( 
+          inputId = "resolution",
+          label = "Screen Resolution", 
+          min=1, max=3, value = 1
+        ) ),
+        selectizeInput(
+          "composite",
+          label = "Combinazioni bande",
+          choices = processingComposite,
+          selected = character(0)
+        ),
+        img(id="legendIndex", style="width:100%;"),
+        
+        actionButton("aggiorna", "Aggiorna la mappa"),
+        actionButton("calcola", "Calcola il grafico") ,
+        downloadButton("scaricaPoligoni", "Scarica Poligoni"),
+        downloadButton("scaricaIndice", "Raster Indice")
+      ),
+      controlbarItem(
+        "Filters",
+        knobInput(
+          inputId = "mskCld",
+          label = "Filtra Nuvole", 
+          min=0, max=100, value=0
+        ),
+        
+        knobInput(
+          inputId = "mskSnw",
+          label = "Filtra Neve", 
+          min=0, max=100, value=0
+        )
+      ),
+      controlbarItem(
+        "Infolog",
+        div(id="infolog", style="width:100%; height:500px; overflow-y:auto; padding:5px;")
+      )
+    )
+     
     
   ),
-  dashboardBody( 
+  dashboardBody ( 
     shinyalert::useShinyalert(), 
     shinyjs::useShinyjs(),
     
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fshf"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fsdsdff"),
     # Application title
     #theme = "solar_bootstrap.css",
     div( title=sprintf(
@@ -68,22 +91,22 @@ ui <- dashboardPage(
     
     
     jqui_draggable( 
-     # fixedPanel(top = 5, left=280,  draggable = T, 
-     #               style="z-index:99999; width:250px",
-     #               
-      div(style="position:absolute;z-index:999999999; width:calc( 100vw - 300px ); top:5px; left:290px;", 
-       shinydashboardPlus::boxPlus(
-        title = HTML(paste0(icon("gears"), " Analytics                ")), 
-        closable = TRUE,  width="100%",
-        collapsed = F,
-        enable_label = T, 
-        label_text = "",
-        label_status = "danger",
-        status = "warning",
-        solidHeader = TRUE,
-        collapsible = TRUE, 
-        plotlyOutput("graph1" )
-      ) 
+      # fixedPanel(top = 5, left=280,  draggable = T, 
+      #               style="z-index:99999; width:250px",
+      #               
+      div(style="position:absolute;z-index:999999999; width:calc( 100vw - 500px ); top:5px; left:290px;", 
+          box( id= "myBox",
+                                   title = HTML(paste0(icon("gears"), " Analytics                ")), 
+                                   closable = TRUE,   
+                                   collapsed = F,
+                                   enable_label = T, 
+                                   label_text = "",
+                                   label_status = "danger",
+                                   status = "warning",
+                                   solidHeader = TRUE,
+                                   collapsible = TRUE, 
+                                   plotlyOutput("graph1" )
+          ) 
       ),
       options = list(
         cursor = "move",
