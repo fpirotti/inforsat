@@ -8,11 +8,11 @@ ui <-  dashboardPage(
      
   ),
   
-  controlbar = dashboardControlbar(
+  controlbar = dashboardControlbar( width = 500,
     controlbarMenu(
       id = "cb_menu",
       controlbarItem(
-        "Menus",
+        "Indici",
         selectizeInput(
           "indici",
           label = "Indici",
@@ -27,23 +27,34 @@ ui <-  dashboardPage(
           right = F
         ) ),
         
-        div(title="dddd", numericInput( 
-          inputId = "resolution",
-          label = "Screen Resolution", 
-          min=1, max=3, value = 1
-        ) ),
-        selectizeInput(
-          "composite",
-          label = "Combinazioni bande",
-          choices = processingComposite,
-          selected = character(0)
-        ),
+        # div(title="dddd", numericInput( 
+        #   inputId = "resolution",
+        #   label = "Screen Resolution", 
+        #   min=1, max=3, value = 1
+        # ) ),
+
         img(id="legendIndex", style="width:100%;"),
         
         actionButton("aggiorna", "Aggiorna la mappa"),
         actionButton("calcola", "Calcola il grafico") ,
         downloadButton("scaricaPoligoni", "Scarica Poligoni"),
         downloadButton("scaricaIndice", "Raster Indice")
+      ),
+      
+      controlbarItem(
+         "Composite",
+        selectizeInput(
+          "composite",
+          label = "Combinazioni bande",
+          choices = processingComposite,
+          selected = character(0)
+        ),
+        
+        div(title="dddd",
+            plotlyOutput(outputId = "bandHistogram")
+        ),
+        
+        
       ),
       controlbarItem(
         "Filters",
@@ -72,7 +83,7 @@ ui <-  dashboardPage(
     shinyjs::useShinyjs(),
     
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fsdsdff"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fsdsf"),
     # Application title
     #theme = "solar_bootstrap.css",
     div( title=sprintf(
@@ -94,10 +105,10 @@ ui <-  dashboardPage(
       # fixedPanel(top = 5, left=280,  draggable = T, 
       #               style="z-index:99999; width:250px",
       #               
-      div(style="position:absolute;z-index:999999999; width:calc( 100vw - 500px ); top:5px; left:290px;", 
+      column(12, style="position:absolute;z-index:999999999; width:calc( 100vw - 200px ); top:5px; left:90px;", 
           box( id= "myBox",
                                    title = HTML(paste0(icon("gears"), " Analytics                ")), 
-                                   closable = TRUE,   
+                                   closable = TRUE,  width = NULL,
                                    collapsed = F,
                                    enable_label = T, 
                                    label_text = "",

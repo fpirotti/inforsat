@@ -2,27 +2,46 @@
 
 server <- function(input, output, session) {
   
+  source("functions_auth.R", local=T)
   shinyjs::hide("scaricaIndice")
   shinyjs::hide("scaricaPoligoni")
   shinyjs::addCssClass(id="scaricaIndice", "sideButtons")
   shinyjs::addCssClass(id="scaricaPoligoni", "sideButtons")
   #questi servono per estrarre il valore dagli event e observe event
   
-  reacts<- reactiveValues( table.index=NULL,  IS.LOGGED=F, IS.UNIPD=F)
-  
-  
-  
+  reacts<- reactiveValues( table.index=NULL,   IS.LOGGED=F, IS.UNIPD=F)
+ 
+  output$bandHistogram <- renderPlotly({
+     
+      plot_ly(type = "scatter", mode = "markers") %>% layout(
+        hoverlabel= list(align="left"),
+        margin = list(l = 5, r = 2, b = 20, t = 30),
+        showlegend = T, legend = list(orientation = 'h'),
+        
+        xaxis = list(
+          title = "Grey levels",   range = c(0, 18000), 
+          rangeslider = list(type = "numeric")),
+        yaxis = list(title = "Frequenza", range = c(0, 1.1) ),
+        title = sprintf("Istogramma f(x)")
+      ) %>%  add_markers(
+        x = c(200,4000),
+        y = 0,
+        name = "Info Bande",  
+        marker = list(
+          symbol = "square",
+          color = "black",
+          size = 9
+        )
+      ) 
+
+  })
   
   session$userData$indexfile <- file.path(pathsTemp, sprintf("%s.tif", session$token))
   session$userData$mapfile   <- file.path(pathsTemp, sprintf("%s.map", session$token))
   
   myPolygons<-NULL
   outIndexFile<- file.path(pathsTemp, sprintf("%s.", session$token) )
-  img <- "img/logow.png"
-  ## creo file di configurazione mapserver e lo clono
-
- # readr::read_file(wms.url)
-  nomeIndici<-c("NDVI","RGI","NDMI","NIR", "RGB")
+ 
   
 
   #MAPPA di base
@@ -39,7 +58,7 @@ server <- function(input, output, session) {
     p <- ggplot( tb, aes_string(x="Date", y="q50", color="FID" )  )
     p <- p + geom_crossbar(aes_string(ymin = "q25", ymax = "q75") )
     p <- p + geom_point(aes(x=Date, y=mean) )
-    p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90") )
+    p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90") ) + theme_bw()
     ggplotly(p)
   })
   #observer del bottone che mostra il pannello dei controlli/risultati
@@ -56,7 +75,7 @@ server <- function(input, output, session) {
     updateBox( "myBox", action ="toggle")   
     shinyjs::runjs(" 
                      $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
-                     $('.leaflet-control-layers-overlays').children().after('<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"   id=\"myRange\"><hr>'); ")
+                     $('.leaflet-control-layers-overlays').children().after('<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"   id=\"myRange\"><hr class=legendHR >'); ")
   })
   ### Cambio impostazioni layers ----
   observeEvent({

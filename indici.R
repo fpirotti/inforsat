@@ -88,15 +88,14 @@ getIndice <- function(session, myPolygons){
                            session$input$indici) 
         terra.vrt.cropped.index<-eval(parse(text=  mYexpression) )
          
-        
-        msk<-terra::rast(terra.vrt.cropped.index)
-        if(session$input$mskCld){
-          terra.vrt.cropped.index.msk<-terra::mask(terra.vrt.cropped.index,
-                                               terra.vrt.cropped$CLD )
+         
+        if(session$input$mskCld > 0 ){
+          terra.vrt.cropped.index<-terra::mask(terra.vrt.cropped.index,
+                                               (terra.vrt.cropped$CLD > session$input$mskCld) )
         } 
-        if( session$input$mskSnw ){
-          terra.vrt.cropped.index.msk<-terra::mask(terra.vrt.cropped.index,
-                                                   terra.vrt.cropped$CLD )
+        if( session$input$mskSnw > 0 ){
+          terra.vrt.cropped.index<-terra::mask(terra.vrt.cropped.index,
+                                                   (terra.vrt.cropped$SNW > session$input$mskSnw ) )
         } 
         
         

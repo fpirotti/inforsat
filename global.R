@@ -3,8 +3,8 @@ source("functions_libraries.R")
 source("indici.R")
 source("mappe.R") 
 source("functions_leaflet.map.R")
-source("functions_rgdal.R")
-source("functions_evolut.R")
+source("functions_mapfile.R")
+#source("functions_evolut.R" )
 library(plotly)
 ## absolute path with all S2 images
 image.folder<-"/archivio/esa/s2"
@@ -18,7 +18,7 @@ load("data.rda")
 ## list con chiave il path del folder SAFE e valore della data
 images.lut<-NULL
 
-update.Image.LUT<-function(){
+update.Image.LUT<-function(verbose=F){
   imagelist<-list.files(path= image.folder, pattern="S2[AB]_MSIL2A.*T32TQS.*\\.SAFE", recursive = F, full.names = T )  
   dates<- as.POSIXlt( substr(imagelist, 29,43), format="%Y%m%dT%H%M%OS")
   #bands<- (lapply(imagelist, get20mBandNames ) )
@@ -27,13 +27,18 @@ update.Image.LUT<-function(){
   
   bandslist<-list()
   dd$VRT<-NA
-    for(i in 1:nrow(dd)){
-      
-      dd[i, "VRT"]<- file.path(dd[i, "folder"], "mapservVRT_20m.vrt")
-      bandslist[[ dd[i, "folder"] ]]<-makeVRT(dd[i, "folder"])
-      #dd[i, "bands"]<-I( bands)
+  
+  pb <- progress_bar$new(total = nrow(dd))
+  
+  for(i in 1:nrow(dd)){
+    pb$tick()
+    dd[i, "VRT"]<- file.path(dd[i, "folder"], "mapservVRT_20m.vrt")
+    bandslist[[ dd[i, "folder"] ]]<-makeVRT(dd[i, "folder"], verbose = verbose)
+    #dd[i, "bands"]<-I( bands)
+    progress::progress_bar
     }
-    dd$bands<- I(bandslist)
+
+  dd$bands<- I(bandslist)
   images.lut<<-dd
   save(images.lut, file="images.lut.rda")
 }

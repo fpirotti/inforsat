@@ -8,6 +8,8 @@
   overflow: hidden;
   
 }
+ 
+
 .irs--shiny .irs-bar {
   display: none;
 }
@@ -24,4 +26,9 @@
   
 }
    
+.leaflet-tile-container img {
+    width: 256.8px !important;
+    height: 256.8px !important;
+}
 
+.legendHR { margin:0; }

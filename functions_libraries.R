@@ -9,6 +9,8 @@ library(plotly)
 require(terra)
 require(leaflet)
 require(leaflet.extras)
+require(shinyWidgets)
+library(progress)
 
 
 radio2expression<- list( "NDVI" = "(B08-B04)/(B08+B04)", 
@@ -25,19 +27,18 @@ satLayers<-list("Sentinel-2 Color Composite RGB"=c("100", ""),
 
 
 processingComposite<-list(
-  "Colori Reali" = 'PROCESSING "BANDS=4,3,2,11"', 
-  "SCL" = 'PROCESSING "BANDS=11,11,11,11"', 
-  "NIR1 (8,4,3)" = 'PROCESSING "BANDS=10,4,3,11"',
-  "NIR2 (7,4,3)" = 'PROCESSING "BANDS=7,4,3,11"',
-  "NIR3 (6,4,3)" = 'PROCESSING "BANDS=6,4,3,11"',
-  "NIR4 (5,4,3)" = 'PROCESSING "BANDS=5,4,3,11"',
-  "Urban (12,11,4)" = 'PROCESSING "BANDS=9,8,4,11"',
-  "Agriculture (11,8,2)" = 'PROCESSING "BANDS=8,10,2,11"',
-  "Atmospheric penetration (12,11,8)" = 'PROCESSING "BANDS=9,8,10,11"',
-  "Vegetazione sana (8,11,2)" = 'PROCESSING "BANDS=10,8,2,11"',
-  "Suolo/Acqua (8,11,4)" = 'PROCESSING "BANDS=10,8,4,11"',
-  "Colori naturali compensati con atmosfera (12,8,3)" = 'PROCESSING "BANDS=9,10,3,11"',
-  "SWIR (12,8,4)" = 'PROCESSING "BANDS=9,10,3,11"'
+  "Colori Reali" = paste("B04","B03","B02"),  
+  "NIR1 (8,4,3)" = paste("B8A","B04","B03"),
+  "NIR2 (7,4,3)" = paste("B07","B04","B03"),
+  "NIR3 (6,4,3)" = paste("B06","B04","B03"),
+  "NIR4 (5,4,3)" = paste("B05","B04","B03"),
+  "Urban (12,11,4)" = paste("B12","B11", "B04"),
+  "Agriculture (11,8,2)" = paste("B11","B8A","B02"),
+  "Atmospheric penetration (12,11,8)" = paste("B12","B11","B8A"),
+  "Vegetazione sana (8,11,2)" = paste("B8A","B11","B02"),
+  "Suolo/Acqua (8,11,4)" = paste("B8A","B11","B04"),
+  "Colori naturali compensati con atmosfera (12,8,3)" = paste("B12","B8A","B03"),
+  "SWIR (12,8,4)" = paste("B12","B8A","B04")
 )
 processingMasking<-data.frame(
   a=c("PROCESSING \"LUT_4=0:255,1:255,2:255,3:255,4:255,5:255,6:255,7:255,8:255,9:255,10:255,11:255\"" ,  

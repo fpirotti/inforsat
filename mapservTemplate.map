@@ -55,26 +55,22 @@ MAP
   LAYER
     NAME "100"
     
-    ##--- RGB START
-    ##--- RGB END
+    ##--- RGB PLACEMARK 
     
-    PROCESSING "SCALE=AUTO"
     METADATA
       "wms_title"    "RGB Sentinel 2"  ##required
     END
+    
     PROJECTION
       "init=epsg:32632"   ##recommended
     END
+    
     ##--- PROCESSINGCOMPOSITE START
     ##--- PROCESSINGCOMPOSITE END
     
     ##--- PROCESSINGMASKING START
     ##--- PROCESSINGMASKING END
-    
-    PROCESSING "SCALE_1=AUTO"
-    PROCESSING "SCALE_2=AUTO"
-    PROCESSING "SCALE_3=AUTO"
-    PROCESSING "SCALE_4=AUTO"
+
     
     TYPE RASTER
     STATUS ON
@@ -86,8 +82,9 @@ MAP
     METADATA
       "wms_title"    "INDEX"  ##required
     END
-    ##--- INDEX START
-    ##--- INDEX END
+    
+    ##--- INDEX PLACEMARK
+    
     PROJECTION
       "init=epsg:3857"   ##recommended
     END  
@@ -106,8 +103,9 @@ MAP
     METADATA
       "wms_title"    "SCL Sentinel 2"  ##required
     END
-    ##--- SCL START
-    ##--- SCL END
+    
+    ##--- SCL PLACEMARK 
+    
     PROJECTION
       "init=epsg:32632"   ##recommended
     END

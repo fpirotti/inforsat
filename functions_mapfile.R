@@ -1,10 +1,10 @@
-
-create4mapserver <- function(session, qq, qq.color){
+### 
+createColorScale4index <- function(session, qq, qq.color){
   
   colscale<-c()
   
   for(i.color in rev(1:(length(qq)-1)) ){
-    colscale<-c(colscale, sprintf("
+   colscale<-c(colscale, sprintf("
   CLASS
     EXPRESSION ([pixel] >= %f and [pixel] < %f)
     STYLE
@@ -62,7 +62,7 @@ create4mapserver <- function(session, qq, qq.color){
 fixedScale4index<-function(session, r, index="NDVI"){
   qq <- c(-1, seq(0,1, by=0.1) )
   qq.color<-c('#0000FF', '#c7eae5', '#a50026','#d73027','#f46d43','#fdae61','#fee08b','#d9ef8b','#a6d96a','#66bd63','#1a9850','#006837')
-  create4mapserver(session, qq, qq.color)
+  createColorScale4index(session, qq, qq.color)
   
 }
 
@@ -75,7 +75,7 @@ calcMapserverScale4index<-function(session, r){
   
   qq.color<-RColorBrewer::brewer.pal( length(qq),"Spectral")
   
-  create4mapserver(session, qq, qq.color)
+  createColorScale4index(session, qq, qq.color)
   
   
 }
@@ -185,8 +185,6 @@ createIndexFile<-function(session){
   
   calcMapserverScale4index(session,r)
   
-  #browser()
-  ##########&&&&&&&
   })
   
 }
