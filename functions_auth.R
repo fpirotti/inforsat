@@ -12,38 +12,40 @@ iv$add_rule("password", sv_required())
 iv$add_rule("email", sv_required())
 iv$add_rule("email", sv_email())
 iv$enable()
-
+ 
 if(file.exists("users.pwds.rda")) load("users.pwds.rda") else users.pwds<-list()
+if(file.exists("users.logs.rda")) load("users.logs.rda") else users.logs<-list()
 
 checkPass<-T
 
 password_accept = function(x){ 
   print(input$email)
   
-  
-  print(input$resetpwd)
-  print("==========")
+   
   
   if(is.null(users.pwds[[ input$email ]]) ){
     title<-"EMail not recognized"
     message<-sprintf("Use the 'Send password' buttonto sent a password to %s. <br>
                     Access will be monitored and blacklisted if abused.", input$email)
   } else {
-    is.correct.pw<-F
+    is.correct.pw<-F  
     if(is.character(users.pwds[[ input$email ]]) && 
-       length(input$password)>2 ) {
+       nchar(input$password)>2 ) {
+      print(input$password)
       is.correct.pw<-bcrypt::checkpw(input$password, users.pwds[[ input$email ]])
     } 
     if( is.correct.pw ){
       ra$IS.LOGGED<-T
       ra$LOGGED.USER<-input$email
-      if(is.null(logs[[ input$email ]])) {
-        logs[[ input$email ]]<-Sys.time()
+      
+      
+      if(is.null(users.logs[[ input$email ]])) {
+        users.logs[[ input$email ]]<-Sys.time()
       }
       else {
-        logs[[ input$email ]]<-c(logs[[ input$email ]], Sys.time())
+        users.logs[[ input$email ]]<-c(users.logs[[ input$email ]], Sys.time())
       }
-      save(logs, file="logs.rda")
+      save(users.logs, file="users.logs.rda")
       
       return()
     }
@@ -59,7 +61,8 @@ password_accept = function(x){
                 HTML(message), 
                 textInput("email", NULL),
                 passwordInput("password", NULL),
-                div(style="cursor:pointer; width:150px;height:36px; corner-radius:4px; padding:5px; background-color:#FF000044;", 
+                div(style="cursor:pointer; width:150px;height:36px; color:black; border-radius:5px; padding:6px; 
+                  margin: 0 auto; background-color:#FF000044;", 
                     onclick="Shiny.setInputValue('resetpwd', true,  {priority: 'event'});", 
                     title="A mail with a password will be sent - can also be used to reset your password if you forget it", 
                     "Send password" ) ,
@@ -97,7 +100,10 @@ isValidEmail <- function(x) {
 setPassword<-function(x){
   print("here")
   pw<-fun::random_password(12, extended = F)
-  if(!exists("users.pwds")) users.pwds<<-list()
+  if(!exists("users.pwds")) {
+    users.pwds<<-list()
+    warning("here in users.pd")
+  }
   users.pwds[[x]]<<- bcrypt::hashpw(pw)
   save(users.pwds, file="users.pwds.rda")
   comm<-sprintf('echo "Your password is: %s - do not reply to this mail.\\n\\nInForSat Team\\nCIRGEO Interdepartmenta Research Center in Geomatics" | mailx -s "InForSat password" --append "From: CIRGEO InForSAT <donotreply@unipd.it>" --append="BCC:<francesco.pirotti@unipd.it>"  %s',
@@ -118,7 +124,8 @@ shinyalert( html = TRUE, closeOnEsc = F, showConfirmButton = F,
               HTML("<b>Email and password</b><br>if your email is not enabled push the button 'Send password' - password will be sent to the address"), 
               textInput("email", NULL),
               passwordInput("password", NULL),
-              div(style="cursor:pointer; width:150px;height:36px; corner-radius:4px; padding:5px; background-color:#FF000044;", 
+              div(style="cursor:pointer; width:150px;height:36px; color:black; border-radius:5px; padding:6px; 
+                  margin: 0 auto; background-color:#FF000044;", 
                   onclick="Shiny.setInputValue('resetpwd', true,  {priority: 'event'});", 
                   title="A mail with a password will be sent - can also be used to reset your password if you forget it", 
                   "Send password" ) ,
