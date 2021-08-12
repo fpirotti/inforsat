@@ -30,14 +30,14 @@ taglist.auth <- list(
     textInput("email", "Email address"),
     passwordInput("password", "Password"),
     div( style="margin: 0 auto; ", 
+         actionButton("ok_pw", "Log IN", icon = icon("user"), style="color:black;", 
+                      class="btn btn-success action-button shiny-bound-input"),
          div(style=" color:black; font-weight:500;   border-radius: 5px; 
                        cursor: pointer;", 
              class="btn btn-warning action-button shiny-bound-input",
              onclick="Shiny.setInputValue('resetpwd', true,  {priority: 'event'});", 
-             title="A mail with a password will be sent - can also be used to reset your password if you forget it", 
-             HTML( as.character(icon("envelope")), "  Send password" ) ),
-         actionButton("ok_pw", "Log IN", icon = icon("user"), style="color:black;", 
-                      class="btn btn-success action-button shiny-bound-input") 
+             title="A mail with a password will be sent - can also be used to reset your password if you forget it",  
+         HTML( as.character(icon("envelope")), "  Send password" ) )
     ) 
   )
 )
@@ -79,7 +79,11 @@ setPassword<-function(x){
 
 #### check submitted form data
 observeEvent(input$ok_pw, {
- 
+  # ra$IS.LOGGED<-T
+  # ra$LOGGED.USER<-"sss"
+  # 
+  # removeModal()
+  # return()
   if( !isValidEmail(input$email ) ){
     title<-"Authentication error"
     message<-sprintf("Email address \"%s\" is not recognized as a valid email address.", input$email)

@@ -32,3 +32,13 @@
 }
 
 .legendHR { margin:0; }
+
+.sw-dropdown-in{
+  padding:1;
+}
+#sidebarCollapsed, .sw-show.sw-dropdown-content {
+    z-index:9999;
+}
+.sw-show.sw-dropdown-content {
+    min-width:200px;
+}

@@ -55,7 +55,8 @@ leaflet.object <-
   htmlwidgets::onRender("
     function(el, x) {
       var myMap = this;
-      Shiny.setInputValue('leafletRendered',true);
+      Shiny.setInputValue('leafletRendered',true, {priority: \"event\"});
+ 
       myMap.on('baselayerchange',
         function (e) {
           myMap.minimap.changeLayer(L.tileLayer.provider(e.name));

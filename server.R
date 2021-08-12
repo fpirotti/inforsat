@@ -2,7 +2,7 @@
 
 server <- function(input, output, session) {
   
-  source("functions_auth.R", local=T)
+  #source("functions_auth.R", local=T)
   shinyjs::hide("scaricaIndice")
   shinyjs::hide("scaricaPoligoni")
   shinyjs::addCssClass(id="scaricaIndice", "sideButtons")
@@ -68,12 +68,14 @@ server <- function(input, output, session) {
  
   
   observeEvent(input$showBtn2, {
-    shinyjs::toggle('risultati')})
+    shinyjs::toggle('risultati')
+  })
   
   observeEvent(input$leafletRendered, { 
-    
+     
+  
     updateBox( "myBox", action ="toggle")   
-    shinyjs::runjs(" 
+    shinyjs::runjs(" console.warn( $('#legendPlaceholder') );
                      $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
                      $('.leaflet-control-layers-overlays').children().after('<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"   id=\"myRange\"><hr class=legendHR >'); ")
   })

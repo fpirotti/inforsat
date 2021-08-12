@@ -4,8 +4,39 @@ library(shinydashboardPlus)
 ui <-  dashboardPage(
   header = dashboardHeader( ), 
   sidebar=dashboardSidebar (
-    div(id="legendPlaceholder", style="padding:5px;")
-     
+    
+    collapsed = FALSE,
+    minified = F,
+    sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
+                      label = "Search..."),
+    dropdown(
+      
+      tags$h3("List of Input"),
+      
+      pickerInput(inputId = 'xcol2',
+                  label = 'X Variable',
+                  choices = names(iris),
+                  options = list(`style` = "btn-info")),
+      
+      style = "bordered", icon = icon("gear"),
+       width = "400px", label = "Tools",
+      animate = animateOptions(
+        enter = animations$fading_entrances$fadeInLeftBig,
+        exit = animations$fading_exits$fadeOutRightBig
+      )
+    ),
+    
+    dropdown(
+      div(id="legendPlaceholder", style="padding:5px; margin-top:-10px;"),
+      style = "bordered", icon = icon("gear"),
+       label = "Layers",
+      animate = animateOptions(
+        enter = animations$fading_entrances$fadeInLeftBig,
+        exit = animations$fading_exits$fadeOutRightBig
+      )
+    )
+    
+   
   ),
   
   controlbar = dashboardControlbar( width = 500,
@@ -79,11 +110,11 @@ ui <-  dashboardPage(
     
   ),
   dashboardBody ( 
-    shinyalert::useShinyalert(), 
+    shinyalert::useShinyalert(force=T), 
     shinyjs::useShinyjs(),
     
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fsdsf"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=ffd"),
     # Application title
     #theme = "solar_bootstrap.css",
     div( title=sprintf(
