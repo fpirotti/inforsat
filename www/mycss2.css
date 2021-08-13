@@ -1,3 +1,4 @@
+/*
 #shiny-notification-panel{
   width:calc( 100vw - 240px );
   min-width: 300px;
@@ -6,7 +7,6 @@
   margin:0 !important;
   padding:0 !important;
   overflow: hidden;
-  
 }
  
 
@@ -16,14 +16,14 @@
 .sideButtons {
   color:#000 !important;
 }
+*/
 
 .leaflet-control-layers{
   font-size: small;
 }
 #mymap { 
   height:calc(100vh - 130px) !important;
-  overflow: hidden;
-  
+  overflow: hidden; 
 }
    
 .leaflet-tile-container img {
@@ -33,12 +33,19 @@
 
 .legendHR { margin:0; }
 
+.leaflet-top.leaflet-left{
+  position:static;
+}
 .sw-dropdown-in{
   padding:1;
 }
-#sidebarCollapsed, .sw-show.sw-dropdown-content {
+.sw-show.sw-dropdown-content, .sw-dropdown-in {
     z-index:9999;
-}
-.sw-show.sw-dropdown-content {
     min-width:200px;
+    background:black;
+}
+
+.airdatepicker-highlighted {
+  color: #fff;
+  background: #333333;
 }

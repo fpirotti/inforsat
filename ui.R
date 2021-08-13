@@ -1,23 +1,44 @@
 # Define UI for application that draws a histogram
 #,
 library(shinydashboardPlus)
+##required for ui
+tt <- table(images.lut$tile)
+tiles.labels = sprintf("%s (%s)", names(tt) , tt )
+tt <- names(tt)
+names(tt)<- tiles.labels
 ui <-  dashboardPage(
-  header = dashboardHeader( ), 
+  #skin = "black",
+  
+  header = dashboardHeader( title = "InforSAT" ), 
   sidebar=dashboardSidebar (
     
     collapsed = FALSE,
     minified = F,
     sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
                       label = "Search..."),
-    dropdown(
+    dropdown( 
+       
+      selectInput(inputId = 'tile',
+                  label = 'Choose tile', 
+                  choices = tt ),
       
-      tags$h3("List of Input"),
+      selectInput(inputId = 'date',
+                  label = 'Choose Image by list', 
+                  choices = images.lut %>% filter(tile == tt[[1]]) %>% select(date) ),
       
-      pickerInput(inputId = 'xcol2',
-                  label = 'X Variable',
-                  choices = names(iris),
-                  options = list(`style` = "btn-info")),
-      
+      airDatepickerInput(  
+        inputId = "datePicker", 
+        label ="Choose image by calendar",
+        range = c( first(as.Date(images.lut$date)), Sys.Date()),
+        value = last(as.Date(images.lut$date)), 
+        todayButton=T,
+        addon=NULL,
+        #position = "bottom right", 
+        startView = last(as.Date(images.lut$date)),
+        highlightedDates = as.Date(images.lut$date),
+        disabledDates = 
+          as.Date( setdiff( as.character( seq(first(as.Date(images.lut$date)), Sys.Date(), by="days") ) , as.character(as.Date(images.lut$date))  ) )
+      ),
       style = "bordered", icon = icon("gear"),
        width = "400px", label = "Tools",
       animate = animateOptions(
@@ -136,29 +157,32 @@ ui <-  dashboardPage(
     shinyjs::useShinyjs(),
     
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=ffd"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fvcfcfd"),
+    tags$head(tags$script(src="myfuncts.js?v=3ccxd")) ,
     # Application title
     #theme = "solar_bootstrap.css",
-    div( title=sprintf(
-      "Scegli giorno (%d immagini disponibili)",
-      length(images.lut$dates)
-    ), id="topMostSlider",
-      style = "margin:0 0; position:relative; width:100%;   padding:0px 0px",
-      shinyWidgets::sliderTextInput(
-        "dayselected",
-        width = "100%",
-        NULL,
-        choices = as.character(images.lut$dates),
-        grid = TRUE
-      )
-    ),
+    # div( title=sprintf(
+    #   "Scegli giorno (%d immagini disponibili)",
+    #   length(images.lut$dates)
+    # ), id="topMostSlider",
+    #   style = "margin:0 0; position:relative; display:inline-block; width:100%;   padding:0px 0px",
+    #   # shinyWidgets::sliderTextInput(
+    #   #   "dayselected",
+    #   #   width = "100%",
+    #   #   NULL,
+    #   #   choices = as.character(images.lut$date),
+    #   #   grid = TRUE
+    #   # )
+    # 
+    # 
+    # ),
     
     
     jqui_draggable( 
       # fixedPanel(top = 5, left=280,  draggable = T, 
       #               style="z-index:99999; width:250px",
       #               
-      column(12, style="position:absolute;z-index:999999999; width:calc( 100vw - 200px ); top:5px; left:90px;", 
+      column(12, style="displan:none; position:absolute;z-index:999999999; width:calc( 100vw - 200px ); top:5px; left:90px;", 
           box( id= "myBox",
                                    title = HTML(paste0(icon("gears"), " Analytics                ")), 
                                    closable = TRUE,  width = NULL,

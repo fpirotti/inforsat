@@ -7,6 +7,7 @@ library(plotly)
 library(progress)
 library(foreach)
 library(doParallel)
+library(sf)
 ## absolute path with all S2 images
 image.folder <- "/archivio/esa/s2"
 
@@ -30,13 +31,18 @@ bands2use <-
   )
 
 #load("data.rda")
-load("images.lut.rda")
+load("images.lut.rda") 
 #images.lut2<-images.lut
 #save(images.lut2, file="images.lut2.rda")
 #images.lut2<-images.lut
 ##/S2A_MSIL2A_20170613T101031_N0205_R022_T32TPR_20170613T101608.SAFE/
 ## list con chiave il path del folder SAFE e valore della data
 #images.lut<-NULL
+
+st_read("tilesS2.gpkg",
+        query = sprintf("SELECT * FROM \"tilesS2\" WHERE name in ('%s')", paste0(collapse = "','", levels(images.lut$tile) )  )  )
+
+sf::read_sf("tilesS2.gpkg", )
 
 update.Image.LUT <- function(verbose = F) {
   imagelist <-
@@ -59,7 +65,7 @@ update.Image.LUT <- function(verbose = F) {
   finalizeData <- function(){
     imagelist2  <- data.frame(
       "date" = as.POSIXct(dates, origin=lubridate::origin),
-      "tile" = factor(tiles),
+      "tile" = factor( substr(tiles, 2, 9) ),
       "folder" = folders,
       "folder.size" =  folder.sizes,
       "VRT"  = VRTs
@@ -154,7 +160,10 @@ update.Image.LUT <- function(verbose = F) {
     return(NULL)
   }  
   
-  pb$terminate()  
+  pb$terminate() 
+  finalizeData()
+  images.lut <- images.lut %>% arrange(date, tile) %>% distinct(date, tile,  .keep_all = TRUE)
+  save(images.lut, file = "images.lut.rda")
 }
-#images.lut2 <- images.lut %>% arrange(date, tile) %>% distinct(date, tile,  .keep_all = TRUE)
-update.Image.LUT(T)
+#images.lut <- images.lut %>% arrange(date, tile) %>% distinct(date, tile,  .keep_all = TRUE)
+#update.Image.LUT(T)

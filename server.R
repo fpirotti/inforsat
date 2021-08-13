@@ -9,8 +9,22 @@ server <- function(input, output, session) {
   shinyjs::addCssClass(id="scaricaPoligoni", "sideButtons")
   #questi servono per estrarre il valore dagli event e observe event
   
-  reacts<- reactiveValues( table.index=NULL,   IS.LOGGED=F, IS.UNIPD=F)
+  reacts<- reactiveValues( table.index=NULL,   IS.LOGGED=F, IS.UNIPD=F,
+                           activeLUT.Table = images.lut %>% filter(tile==images.lut$tile[[1]] ) )
  
+  observeEvent(input$tile, {
+    reacts.activeLUT.Table <- images.lut %>% filter(tile==input$tile )
+    
+    updateAirDateInput(session = session, "datePicker",
+                       clear=T, options = list(
+                       value = last(as.Date(reacts.activeLUT.Table$date)),
+                       highlightedDates = as.Date(reacts.activeLUT.Table$date),
+                       disabledDates =  as.Date( setdiff( as.character( seq(first(as.Date(reacts.activeLUT.Table$date)),
+                                                                            Sys.Date(), by="days") ) , as.character(as.Date(reacts.activeLUT.Table$date))  ) )
+                      ) )
+    updateSelectInput(session = session, "date", choices = reacts.activeLUT.Table$date )
+  }, ignoreInit = T)
+  
   output$bandHistogram <- renderPlotly({
      
       plot_ly(type = "scatter", mode = "markers") %>% layout(
