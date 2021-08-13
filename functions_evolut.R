@@ -41,13 +41,18 @@ get20mBandInfo<-function(bandsPath, verbose=F){
 }
 
 makeVRT<-function(path, vrtname="mapservVRT_20m.vrt", verbose=F){
+  
   rasters.start<-list.files(path, ".*_20m\\.jp2$", recursive=T, full.names = T)
  
   bands.list.with.path <- get20mBandInfo(rasters.start, verbose) 
+  
   vrt<-file.path(path, vrtname)
+  
   gdalUtils::gdalbuildvrt( as.character( sapply( bands.list.with.path, '[[', "fpath", USE.NAMES = F ) ) , 
                            vrt, separate = T )
+  
   bands.list.with.path
+  
 }
 
 

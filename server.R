@@ -75,9 +75,10 @@ server <- function(input, output, session) {
      
   
     updateBox( "myBox", action ="toggle")   
-    shinyjs::runjs(" console.warn( $('#legendPlaceholder') );
+ 
+    shinyjs::runjs("  
                      $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
-                     $('.leaflet-control-layers-overlays').children().after('<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"   id=\"myRange\"><hr class=legendHR >'); ")
+                     $('.leaflet-control-layers-overlays').children().after( function(){return '<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"  onchange=\"console.error( $(this)); console.error(myMap)\" ><hr class=legendHR >' } ); ")
   })
   ### Cambio impostazioni layers ----
   observeEvent({

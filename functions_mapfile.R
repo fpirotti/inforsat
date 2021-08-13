@@ -84,9 +84,9 @@ createIndexFile<-function(session){
    
    
   shinyjs::show("scaricaIndice")
-  nT <- which(images.lut$dates == session$input$dayselected)
+  nT <- which(images.lut$date == session$input$dayselected)
 
-  date<- (images.lut[nT, ]$dates)
+  date<- (images.lut[nT, ]$date)
   bands<- (images.lut[nT, ]$bands)[[1]]
   folder<-images.lut[nT, ]$folder
   vrt<-file.path(folder, "mapservVRT_20m.vrt")

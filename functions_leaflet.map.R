@@ -54,7 +54,7 @@ leaflet.object <-
              position = "bottomleft") %>%
   htmlwidgets::onRender("
     function(el, x) {
-      var myMap = this;
+      myMap = this;
       Shiny.setInputValue('leafletRendered',true, {priority: \"event\"});
  
       myMap.on('baselayerchange',

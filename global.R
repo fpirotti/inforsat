@@ -1,70 +1,133 @@
 source("functions_libraries.R")
-#source("dbcon.R")
-source("indici.R")
-source("mappe.R") 
+
 source("functions_leaflet.map.R")
- source("functions_mapfile.R")
-source("functions_evolut.R" )
+source("functions_mapfile.R")
+source("functions_evolut.R")
 library(plotly)
 library(progress)
 ## absolute path with all S2 images
-image.folder<-"/archivio/esa/s2"
+image.folder <- "/archivio/esa/s2"
 
-bands2use <-  c("AOT" ,"B02", "B03" ,"B04",                                 
-    "B05" ,"B06", "B07" ,"B11",                                 
-    "B12" ,"B8A",  "SCL", "TCI", "CLD", "SNW", "WVP")         
+bands2use <-
+  c(
+    "AOT" ,
+    "B02",
+    "B03" ,
+    "B04",
+    "B05" ,
+    "B06",
+    "B07" ,
+    "B11",
+    "B12" ,
+    "B8A",
+    "SCL",
+    "TCI",
+    "CLD",
+    "SNW",
+    "WVP"
+  )
 
-load("data.rda")
+#load("data.rda")
+load("images.lut.rda")
+
 ##/S2A_MSIL2A_20170613T101031_N0205_R022_T32TPR_20170613T101608.SAFE/
 ## list con chiave il path del folder SAFE e valore della data
 #images.lut<-NULL
 
-update.Image.LUT<-function(verbose=F){
-  imagelist<-list.files(path= image.folder, pattern="S2[AB]_MSIL2A.*T32TQS.*\\.SAFE", recursive = F, full.names = T )  
-  dates<- as.POSIXlt( substr(imagelist, 29,43), format="%Y%m%dT%H%M%OS")
-  ##remove existing
-  setdiff(imagelist, images.lut$folder)
+update.Image.LUT <- function(verbose = F) {
+  imagelist <-
+    list.files(
+      path = image.folder,
+      pattern = "S2[AB]_MSIL2A.*.*\\.SAFE",
+      recursive = F,
+      full.names = T
+    )
+  ## naming convention changed so we find a robust finder
+  folders <- c()
+  folder.sizes <- c()
+  dates <- c()
+  tiles <- c()
+  VRTs <- c()
+  bandslist <- list()
+  
+  pb <- progress_bar$new(total = length(imagelist))
+  
+  for (x in imagelist) {
+    pb$tick() 
+    if(length(folders)>3) break
+    ## skip if exists
 
-  keep <- which(!( format(dates,"%Y-%m-%d" ) %in% as.character(images.lut$dates) ) )
-  
-  imagelist<- imagelist[keep]
-  dates<- dates[keep]
-  if(length(dates)<1){
-    warning("Everything up to date")
-    return(NULL)
-  }
-  #bands<- (lapply(imagelist, get20mBandNames ) )
-  dd <- as.data.frame( (data.frame(folder=imagelist, dates=as.Date(dates)  ) )  %>% arrange(dates) %>% distinct(dates,  .keep_all=TRUE) )
-  rownames(dd)<-dd$folder
-  
-  bandslist<-list()
-  dd$VRT<-NA
-  
-  pb <- progress_bar$new(total = nrow(dd))
-  
-  for(i in 1:nrow(dd)){
-    pb$tick()
-    folder <- dd[i, "folder"]
-    if( is.element(folder, rownames(images.lut)) ){
+    folder <- x
+    folder.name <- tools::file_path_sans_ext(basename(x))
+    x <- strsplit(folder.name, split = "_")[[1]]
+    
+    if (is.element(folder, images.lut$folder) ) {
+      if(verbose) warning( sprintf(" %s esiste!! .... skipping ...\n", folder.name))
+      next
+    }
+    ww <- which(nchar(x) == 15)
+    if (length(ww) < 1) {
+      warning( sprintf("Length of file bit does not match date, check folder %s!! .... skipping ...", folder))
+      next
+    }
+    data <- as.POSIXct(x[[ww[[1]]]], format = "%Y%m%dT%H%M%OS")
+    ww <- which(grepl("^T[A-Z0-9]{5}" , x))
+    if (length(ww) != 1) {
+      warning( sprintf("Length of TILE part in folder name does not match, check folder %s!! .... skipping ...", folder))
+      next
+    }
+    tile <-  x[[ww[[1]]]]
+    if (length(ww) != 1) {
+      warning( sprintf("Length of TILE part in folder name does not match, check folder %s!! .... skipping ...", folder))
       next
     }
     
-    dd[i, "VRT"]<- file.path(dd[i, "folder"], "mapservVRT_20m.vrt")
-    bandslist[[ folder ]] <- makeVRT(dd[i, "folder"], verbose = verbose)
-    #dd[i, "bands"]<-I( bands)
-    #progress::progress_bar
-    #pb$tick()
+    size <- as.integer(strsplit(split = "\t", system(sprintf('du -ms %s', folder), intern = T))[[1]][[1]] )
+    ints <- intersect(which(data == dates), which(tile==tiles))
+    
+    if( length(ints)!=0 ){
+      ## duplicated! we keep the old one only if the size is larger in the older one 
+      warning("Duplicated %s %s")
+      if(size < folder.sizes[[ints]]) {
+        next
+      } else {
+          bands   <- bands[-ints]   
+          VRTs    <- VRTs[-ints]   
+          tiles   <- tiles[-ints]   
+          dates   <- dates[-ints]   
+          folders <- folders[-ints]         
+      } 
     }
+    
+    vrt<- file.path(folder, "mapservVRT_20m.vrt")
+    bandslist[[folder]]  <- makeVRT(folder, verbose = verbose)
+    
+    folder.sizes <- c(folder.sizes,  size )
+   # bands <- c(bands,  bandslist  )
+    VRTs <- c(VRTs, vrt)
+    tiles <- c(tiles, tile) 
+    dates <- c(dates, data)
+    folders <- c(folders, folder)
+     
+  } 
+  imagelist2  <- data.frame(
+    "date" = as.POSIXct(dates, origin=lubridate::origin),
+    "tile" = factor(tiles),
+    "folder" = folders,
+    "folder.size" =  folder.sizes,
+    "VRT"  = VRTs
+  )
   
-  pb$terminate()
+  imagelist2$bands = I(bandslist)
+  pb$terminate() 
   
-  dd$bands<- I(bandslist)
-  images.lut.temp <- rbind(images.lut, dd)
-  images.lut<<-images.lut.temp
-  save(images.lut, file="images.lut.rda")
+  if( !exists("images.lut") || is.null(images.lut) ||  nrow(images.lut)==0 ){
+    images.lut <<- imagelist2    
+  } else {
+    images.lut <<- rbind(images.lut, imagelist2)
+  }
+
+  save(images.lut, file = "images.lut.rda")
 }
 
-load("images.lut.rda")
-update.Image.LUT()
-
-
+update.Image.LUT(T)

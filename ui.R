@@ -21,20 +21,60 @@ ui <-  dashboardPage(
       style = "bordered", icon = icon("gear"),
        width = "400px", label = "Tools",
       animate = animateOptions(
-        enter = animations$fading_entrances$fadeInLeftBig,
-        exit = animations$fading_exits$fadeOutRightBig
+        enter = animations$fading_entrances$fadeIn,
+        exit = animations$fading_exits$fadeOut,
+        duration=0.5
       )
     ),
-    
-    dropdown(
-      div(id="legendPlaceholder", style="padding:5px; margin-top:-10px;"),
-      style = "bordered", icon = icon("gear"),
-       label = "Layers",
-      animate = animateOptions(
-        enter = animations$fading_entrances$fadeInLeftBig,
-        exit = animations$fading_exits$fadeOutRightBig
-      )
-    )
+    box( id= "LayersBox",
+         title = HTML(paste0(icon("table"), " Layers                ")), 
+         closable = F,  width = NULL,
+         collapsed = T,
+         enable_label = F, 
+         label_text = "",
+         #label_status = "danger",
+         status = "warning",
+         solidHeader = TRUE,
+         collapsible = TRUE,      
+         actionBttn(inputId = "aggiorna", label = "Aggiorna la mappa", icon=icon("reload"), 
+                    style="simple", color = "primary", size="sm"),
+         div(id="legendPlaceholder", style=" margin:0 -10px;") 
+    ) ,
+    box( id= "LayersBox2",
+         title = HTML(paste0(icon("gears"), " Layers      ")), 
+         closable = F,  width = NULL,
+         collapsed = T,
+         enable_label = F,  
+         background = "black",
+         #label_status = "danger",
+         #status = "primary",
+         solidHeader = TRUE,
+         collapsible = TRUE,
+         div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", materialSwitch( 
+           inputId = "freezeScale",
+           label = "Scala fissa",
+           status = "primary",
+           right = F
+         ) ),
+           
+         img(id="legendIndex", style="width:100%;"),
+         
+         actionButton("calcola", "Calcola il grafico") ,
+         downloadButton("scaricaPoligoni", "Scarica Poligoni"),
+         downloadButton("scaricaIndice", "Raster Indice")
+    ) 
+    # dropdown(
+    #   actionButton("aggiorna", "Aggiorna la mappa"),
+    #   div(id="legendPlaceholder", style=" margin:0 -10px;"),
+    #   hr(),
+    #   style = "bordered", icon = icon("table"),
+    #    label = "Layers",
+    #   animate = animateOptions(
+    #     enter = animations$fading_entrances$fadeIn,
+    #     exit = animations$fading_exits$fadeOut,
+    #     duration=0.5
+    #   )
+    # )
     
    
   ),
@@ -49,27 +89,9 @@ ui <-  dashboardPage(
           label = "Indici",
           choices = radio2expression,
           selected = character(0)
-        ), 
+        ) 
         
-        div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", materialSwitch( 
-          inputId = "freezeScale",
-          label = "Scala fissa",
-          status = "primary",
-          right = F
-        ) ),
-        
-        # div(title="dddd", numericInput( 
-        #   inputId = "resolution",
-        #   label = "Screen Resolution", 
-        #   min=1, max=3, value = 1
-        # ) ),
 
-        img(id="legendIndex", style="width:100%;"),
-        
-        actionButton("aggiorna", "Aggiorna la mappa"),
-        actionButton("calcola", "Calcola il grafico") ,
-        downloadButton("scaricaPoligoni", "Scarica Poligoni"),
-        downloadButton("scaricaIndice", "Raster Indice")
       ),
       
       controlbarItem(
