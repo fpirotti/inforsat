@@ -29,7 +29,7 @@ leaflet.object <-
     position =("topright"),
     baseGroups = c("OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto"),
     overlayGroups = as.character(overlayGroups.WMS.layerIDS),
-    layersControlOptions(autoZIndex = F) 
+    layersControlOptions(autoZIndex = T) 
   ) %>% 
   
   hideGroup( as.character(overlayGroups.WMS.layerIDS) )   %>% 

@@ -1,7 +1,5 @@
-# Define server logic required to draw a histogram
-
-server <- function(input, output, session) {
-  
+# Define server logic required to draw a histogram 
+server <- function(input, output, session) { 
   #source("functions_auth.R", local=T)
   shinyjs::hide("scaricaIndice")
   shinyjs::hide("scaricaPoligoni")
@@ -13,6 +11,7 @@ server <- function(input, output, session) {
                            activeLUT.Table = images.lut %>% filter(tile==images.lut$tile[[1]] ) )
  
   observeEvent(input$tile, {
+    
     reacts.activeLUT.Table <- images.lut %>% filter(tile==input$tile )
     
     updateAirDateInput(session = session, "datePicker",
@@ -22,7 +21,14 @@ server <- function(input, output, session) {
                        disabledDates =  as.Date( setdiff( as.character( seq(first(as.Date(reacts.activeLUT.Table$date)),
                                                                             Sys.Date(), by="days") ) , as.character(as.Date(reacts.activeLUT.Table$date))  ) )
                       ) )
-    updateSelectInput(session = session, "date", choices = reacts.activeLUT.Table$date )
+    
+    updateSelectInput(session = session, "dayselected", choices = reacts.activeLUT.Table$date )
+ 
+    tt <- tiles.geom %>% filter(name == input$tile)
+    ttb <- st_bbox(tt)
+    leafletProxy("mymap")  %>%
+      leaflet::fitBounds( ttb[["xmin"]]  ,  ttb[["ymin"]], ttb[["xmax"]], ttb[["ymax"]])  
+    
   }, ignoreInit = T)
   
   output$bandHistogram <- renderPlotly({
@@ -92,7 +98,20 @@ server <- function(input, output, session) {
  
     shinyjs::runjs("  
                      $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
-                     $('.leaflet-control-layers-overlays').children().after( function(){return '<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"  onchange=\"console.error( $(this)); console.error(myMap)\" ><hr class=legendHR >' } ); ")
+                     $('.leaflet-control-layers-overlays').children().after( function(){return '<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"  oninput=\"changeLayerOpacity($(this))\" ><hr class=legendHR >' } ); 
+                     $('.leaflet-control-layers-overlays').children('label').children('div').css(\"float\", \"left\");
+                     $('.leaflet-control-layers-overlays').children('label').after('&nbsp;<span style=\"float:right;\" title=\"Split view line at mouse\" class=\"fa fa-toggle-on fa-2x fa-rotate-180 toggler\" ></span>')
+                     $('.toggler').on('click', function (e) {
+                        $(this).toggleClass('fa-rotate-180 off');
+                            if($(this).hasClass('fa-rotate-180'))  {
+                              spyGlassDeactivate($(this));
+                              myMap.off('mousemove', spyGlass); 
+                            } else {
+                              spyGlassActivate($(this));
+                              myMap.on('mousemove', spyGlass);  
+                            }
+                    });"
+                   )
   })
   ### Cambio impostazioni layers ----
   observeEvent({
@@ -102,7 +121,7 @@ server <- function(input, output, session) {
     input$dayselected
     input$freezeScale
     input$indici }, {
-       
+        
       session$userData$wms.url<- compositeCreate(session)
       
       #createIndexFile(session)
@@ -194,7 +213,7 @@ server <- function(input, output, session) {
     
     #faccio un controllo se il poligono è disegnato
     if(length(myPolygons)==0){
-      shinyalert::shinyalert(title = "Devi disegnare un poligono per calcolare il grafico", 
+      shinyalert::shinyalert(title = "Please draw one or more rectangles or polygons to define areas in which to calculate temporal statistics ", 
                              type = "warning")
       return()
       }
@@ -219,7 +238,11 @@ server <- function(input, output, session) {
     }#chiudo else
   })
   
-  
+  # ### SPYGLASS -----
+  # observeEvent(input$spyGlass,{
+  # 
+  # }, ignoreInit = T)
+  # 
   
   ### AGGIORNA -----
   observeEvent(input$aggiorna,{

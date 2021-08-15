@@ -5,7 +5,7 @@ overlayGroups.WMS.layerIDS <- list("100"="S2 Color Composite",
                                    "600"="S2 SNOW MSK", 
                                    "300"="INDICE")  
 
-as.character(overlayGroups.WMS.layerIDS)
+#as.character(overlayGroups.WMS.layerIDS)
 ###  OGGETTO LEAFLET DA METTERE SU SERVER.R ------
 leaflet.object <-
   leaflet()%>%
@@ -26,7 +26,7 @@ leaflet.object <-
     position =("topright"),
     baseGroups = c("OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto"),
     overlayGroups = as.character(overlayGroups.WMS.layerIDS),
-    layersControlOptions(autoZIndex = F, collapsed = F) 
+    layersControlOptions(autoZIndex = TRUE, collapsed = F) 
   ) %>% 
   
   hideGroup( as.character(overlayGroups.WMS.layerIDS) )   %>% 
@@ -55,12 +55,9 @@ leaflet.object <-
   htmlwidgets::onRender("
     function(el, x) {
       myMap = this;
-      Shiny.setInputValue('leafletRendered',true, {priority: \"event\"});
- 
-      myMap.on('baselayerchange',
-        function (e) {
-          myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
-        })
+      Shiny.setInputValue('leafletRendered',true, {priority: \"event\"}); 
+
+      myMap.on('baselayerchange', baselayerChanged)
     }") %>%
   leaflet::setView( lng=11.970140, lat=46.349963, zoom = 12)  
 
@@ -80,7 +77,8 @@ updateMap<-function(session){
       session$userData$wms.url,
       group= overlayGroups.WMS.layerIDS[[i]],
       layers = i, 
-      options = WMSTileOptions( format = "image/png", transparent = T, 
+      options = WMSTileOptions( format = "image/png", transparent = T,
+                                zIndex = as.integer(i),
                                 cache=as.character(Sys.time())  ),
       attribution = "Pirotti")
   }

@@ -57,9 +57,10 @@ makeVRT<-function(path, vrtname="mapservVRT_20m.vrt", verbose=F){
 
 
 compositeCreate<-function(session){ 
+  
   masking<-processingMasking[ as.integer(session$input$mskCld)+1, as.integer(session$input$mskSnow)+1 ]
-  selectedDate <- as.character(session$input$dayselected)
-
+  selectedDate <- (session$input$dayselected)
+  print(class(session$input$dayselected))
   if(!file.exists(session$userData$mapfile)){ initMapfile(session) }
   
   mapfile<-readr::read_file(session$userData$mapfile)
@@ -67,10 +68,20 @@ compositeCreate<-function(session){
   if(is.null(selectedDate)){
     last.date<-images.lut[ nrow(images.lut), ]
   }   else { 
-    last.date<-images.lut[ which(images.lut$dates==selectedDate), ]
+    last.date<-images.lut %>% filter(date == session$input$dayselected, tile==session$input$tile)
   }
-    
   
+  print(last.date)
+  if(nrow(last.date)==0){
+    shinyalert::shinyalert("Immagine non trovata", "Contatta assistenza")
+    return()
+  }
+  if(nrow(last.date)>1){
+    shinyalert::shinyalert("Troppe immagini", "Contatta assistenza")
+    return()
+  }
+  
+  print(last.date)
   #vrt<-makeVRT(last.date$folder)
   #if(!file.exists(vrt[[1]])) 
    
@@ -108,7 +119,8 @@ compositeCreate<-function(session){
       }
     }
     
- 
+    plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", list(as.integer(1)) )
+    
     plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "addTraces", list(
       list(
         x = qq$mids,

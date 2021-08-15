@@ -9,6 +9,7 @@ names(tt)<- tiles.labels
 ui <-  dashboardPage(
   #skin = "black",
   
+  preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#000000"),
   header = dashboardHeader( title = "InforSAT" ), 
   sidebar=dashboardSidebar (
     
@@ -17,50 +18,72 @@ ui <-  dashboardPage(
     sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
                       label = "Search..."),
     dropdown( 
-       
-      selectInput(inputId = 'tile',
-                  label = 'Choose tile', 
-                  choices = tt ),
-      
-      selectInput(inputId = 'date',
-                  label = 'Choose Image by list', 
-                  choices = images.lut %>% filter(tile == tt[[1]]) %>% select(date) ),
-      
-      airDatepickerInput(  
-        inputId = "datePicker", 
-        label ="Choose image by calendar",
-        range = c( first(as.Date(images.lut$date)), Sys.Date()),
-        value = last(as.Date(images.lut$date)), 
-        todayButton=T,
-        addon=NULL,
-        #position = "bottom right", 
-        startView = last(as.Date(images.lut$date)),
-        highlightedDates = as.Date(images.lut$date),
-        disabledDates = 
-          as.Date( setdiff( as.character( seq(first(as.Date(images.lut$date)), Sys.Date(), by="days") ) , as.character(as.Date(images.lut$date))  ) )
-      ),
-      style = "bordered", icon = icon("gear"),
-       width = "400px", label = "Tools",
+      fluidRow(
+        column(6, 
+               selectInput(inputId = 'tile',
+                           label = 'Choose tile', 
+                           choices = c("", tt) ),
+               
+               selectInput(inputId = 'dayselected',
+                           label = 'Choose Image by list', 
+                           choices = images.lut %>% filter(tile == tt[[1]]) %>% select(date) ),
+               
+               airDatepickerInput(  
+                 inputId = "datePicker", 
+                 label ="Choose image by calendar",
+                 range = c( first(as.Date(images.lut$date)), Sys.Date()),
+                 value = last(as.Date(images.lut$date)), 
+                 todayButton=T,
+                 addon=NULL,
+                 #position = "bottom right", 
+                 startView = last(as.Date(images.lut$date)),
+                 highlightedDates = as.Date(images.lut$date),
+                 disabledDates = 
+                   as.Date( setdiff( as.character( seq(first(as.Date(images.lut$date)), Sys.Date(), by="days") ) , as.character(as.Date(images.lut$date))  ) )
+               ),
+               div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", 
+                   materialSwitch( 
+                     inputId = "freezeScale",
+                     label = "Scala fissa",
+                     status = "primary",
+                     right = F, inline = T
+                   ),
+                   materialSwitch( 
+                     inputId = "spyGlass",
+                     label = "SpyGlass",
+                     status = "primary",
+                     right = F, inline = T
+                   )
+                 )
+            ),
+        column(6, 
+               actionBttn(inputId = "aggiorna", label = "Aggiorna la mappa", icon=icon("reload"), 
+                          style="simple", color = "primary", size="sm"),
+               div(id="legendPlaceholder", style=" margin:0 -10px;") 
+                
+               )
+      ),   
+      style = "bordered", 
+      icon = icon("table"),
+      width = "500px", 
+      label = "Layers",
       animate = animateOptions(
         enter = animations$fading_entrances$fadeIn,
         exit = animations$fading_exits$fadeOut,
         duration=0.5
       )
     ),
-    box( id= "LayersBox",
-         title = HTML(paste0(icon("table"), " Layers                ")), 
-         closable = F,  width = NULL,
-         collapsed = T,
-         enable_label = F, 
-         label_text = "",
-         #label_status = "danger",
-         status = "warning",
-         solidHeader = TRUE,
-         collapsible = TRUE,      
-         actionBttn(inputId = "aggiorna", label = "Aggiorna la mappa", icon=icon("reload"), 
-                    style="simple", color = "primary", size="sm"),
-         div(id="legendPlaceholder", style=" margin:0 -10px;") 
-    ) ,
+    # box( id= "LayersBox",
+    #      title = HTML(paste0(icon("table"), " Layers                ")), 
+    #      closable = F,  width = NULL,
+    #      collapsed = T,
+    #      enable_label = F, 
+    #      label_text = "",
+    #      #label_status = "danger",
+    #      status = "warning",
+    #      solidHeader = TRUE,
+    #      collapsible = TRUE
+    # ) ,
     box( id= "LayersBox2",
          title = HTML(paste0(icon("gears"), " Layers      ")), 
          closable = F,  width = NULL,
@@ -71,12 +94,7 @@ ui <-  dashboardPage(
          #status = "primary",
          solidHeader = TRUE,
          collapsible = TRUE,
-         div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", materialSwitch( 
-           inputId = "freezeScale",
-           label = "Scala fissa",
-           status = "primary",
-           right = F
-         ) ),
+
            
          img(id="legendIndex", style="width:100%;"),
          
@@ -158,7 +176,7 @@ ui <-  dashboardPage(
     
     
     tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fvcfcfd"),
-    tags$head(tags$script(src="myfuncts.js?v=3ccxd")) ,
+    tags$head(tags$script(src="myfuncts.js?v=3c")) ,
     # Application title
     #theme = "solar_bootstrap.css",
     # div( title=sprintf(

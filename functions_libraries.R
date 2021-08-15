@@ -9,9 +9,13 @@ library(plotly)
 require(terra)
 require(leaflet)
 require(leaflet.extras)
-require(shinyWidgets)
+require(shinyWidgets) 
 library(progress)
-
+library(foreach)
+library(doParallel)
+library(sf)
+library(shinyalert) 
+library(waiter)
 
 radio2expression<- list( "NDVI" = "(B08-B04)/(B08+B04)", 
                          "RGI" = "B04/B03", 

@@ -84,11 +84,15 @@ createIndexFile<-function(session){
    
    
   shinyjs::show("scaricaIndice")
-  nT <- which(images.lut$date == session$input$dayselected)
-
-  date<- (images.lut[nT, ]$date)
-  bands<- (images.lut[nT, ]$bands)[[1]]
-  folder<-images.lut[nT, ]$folder
+ 
+  nT <-  images.lut %>% filter(date == session$input$dayselected, tile==session$input$tile )
+  if( nrow(nT)!=1 ){
+    shinyalert("Problema qui")
+    return()
+  }
+  date<- nT$date[[1]]
+  bands<- (nT$bands[[1]])[[1]]
+  folder<-nT$folder[[1]]
   vrt<-file.path(folder, "mapservVRT_20m.vrt")
   if( !file.exists(vrt) ){
     shinyalert("VRT non trovato", "Contatta assistenza")
