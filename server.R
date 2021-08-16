@@ -9,26 +9,32 @@ server <- function(input, output, session) {
   
   reacts<- reactiveValues( table.index=NULL,   IS.LOGGED=F, IS.UNIPD=F,
                            activeLUT.Table = images.lut %>% filter(tile==images.lut$tile[[1]] ) )
- 
+  
   observeEvent(input$tile, {
     
-    reacts.activeLUT.Table <- images.lut %>% filter(tile==input$tile )
+    reacts$activeLUT.Table <- images.lut %>% filter(tile==input$tile )
     
-    updateAirDateInput(session = session, "datePicker",
-                       clear=T, options = list(
-                       value = last(as.Date(reacts.activeLUT.Table$date)),
-                       highlightedDates = as.Date(reacts.activeLUT.Table$date),
-                       disabledDates =  as.Date( setdiff( as.character( seq(first(as.Date(reacts.activeLUT.Table$date)),
-                                                                            Sys.Date(), by="days") ) , as.character(as.Date(reacts.activeLUT.Table$date))  ) )
-                      ) )
     
-    updateSelectInput(session = session, "dayselected", choices = reacts.activeLUT.Table$date )
+    #  
+    # circos.clear()
+    # df = data.frame(sectors = sample(letters[1:8], 12, replace = TRUE),
+    #                 x = rnorm(12), y = runif(12))
+    # 
+    # circos.initialize(month.name, xlim=c(1,31))
+    # 
+    # circos.track(month.name, ylim = c(0, 1))
+    # 
+    # for(sector.index in all.sector.index) {
+    #   circos.points(x1, y1, sector.index)
+    #   circos.lines(x2, y2, sector.index)
+    # }
  
     tt <- tiles.geom %>% filter(name == input$tile)
     ttb <- st_bbox(tt)
     leafletProxy("mymap")  %>%
       leaflet::fitBounds( ttb[["xmin"]]  ,  ttb[["ymin"]], ttb[["xmax"]], ttb[["ymax"]])  
-    
+ 
+    updateSelectInput(session = session, "dayselected", choices = c("", as.character(reacts$activeLUT.Table$date)) )
   }, ignoreInit = T)
   
   output$bandHistogram <- renderPlotly({
@@ -168,6 +174,10 @@ server <- function(input, output, session) {
     </div>", 
     type = "info")})
   
+  observeEvent(input$mymap_draw_deleted_feature,{
+    myPolygons <<- NULL
+    print("deleted polygons")
+  })
   #OBSERVE della mappa
   observeEvent(input$mymap_draw_new_feature,{ 
  
@@ -221,9 +231,39 @@ server <- function(input, output, session) {
     else{
       #apro il pannello risultati
       shinyjs::show("risultati")
-      
+       
+      tot.ha <- sum(st_area(myPolygons))/10000
+   
+      if( as.numeric(tot.ha) >100){
+        shinyalert::shinyalert("Sorry", paste0("Your area is more than 100 ha, (you have", round(tot.ha) ,"ha in total, please try a smaller area or contact francesco.pirotti@unipd.it, thankyou."))
+        return(NULL)
+      }
+      withProgress(message = 'Estracting data from polygons', value = 0, {    
+        nimages <- nrow(reacts$activeLUT.Table)
+        data.c<- list()
+        for(i in 1:nimages){
+          setProgress(i/(nimages+3), detail = sprintf("Image %s of %s...", i, nimages) )  
+          tt <-terra::rast( reacts$activeLUT.Table$VRT[[i]])
+          bands <- names(reacts$activeLUT.Table$bands[[i]])
+          bands2use <- c("CLD","SNW",  bands2use<- unique( stringr::str_extract_all(   session$input$indici , "B[018][0-9A]")[[1]] ) )
+          ww<-match( bands2use, bands  )
+          tt2 <- tt[[ww]]
+          rr <-  terra::extract(tt2, terra::vect( st_transform(myPolygons, 32632) ))
+          names(rr) <- c("id", bands2use)
+          data.c[[as.character(reacts$activeLUT.Table$date[[i]])]]<-rr
+        }
+        
+      }) 
+      reacts$table.index <- data.table::rbindlist(data.c, idcol = "Date")
+      reacts$table.index$Date <- as.Date( reacts$table.index$Date )
 
-      reacts$table.index<-getIndice(session, myPolygons)
+      mYexpression<-gsub("(B[018][0-9A])",   "  reacts$table.index[['\\1']]  " ,    
+                         session$input$indici) 
+      
+      reacts$table.index$Index <- eval(parse(text=  mYexpression) )   
+   
+      #<-getIndice(session, terra::vect(myPolygons) )
+      
       tb<-isolate(  reacts$table.index )
       if(!is.null(tb) && nrow(tb)==nrow(myPolygons)){
         

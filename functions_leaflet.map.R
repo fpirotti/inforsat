@@ -14,7 +14,8 @@ leaflet.object <-
   
   leaflet::addProviderTiles("Esri", group="ESRI")%>%
   leaflet::addTiles(group="OpenStreetMap")%>%
-  
+  addBingTiles("Satellite BING maps", group="BING", apikey = "AjvjPYuoA4IgNeooKvodDLcxbVL1F8RdIxXUeYsb6PgiVapURz_PbbWvOxVKmNps",
+               imagerySet = c("Aerial") )%>%
   ## F.PIROTTI
   leaflet::addTiles(urlTemplate  ="//idt2.regione.veneto.it/gwc/service/wmts?&REQUEST=GetTile&contextualWMSLegend=0&crs=EPSG:900913&dpiMode=7&format=image/jpeg&layer=rv:OrthoPhoto_2015_pyramid&styles=&tileMatrixSet=EPSG:900913&TILEMATRIX=EPSG:900913:{z}&TILEROW={y}&TILECOL={x}&url=https://idt2.regione.veneto.it/gwc/service/wmts",
                     #layers = "rv:OrthoPhoto_2015_pyramid",
@@ -24,7 +25,7 @@ leaflet.object <-
   )%>%
   leaflet::addLayersControl(
     position =("topright"),
-    baseGroups = c("OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto"),
+    baseGroups = c("OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto", "BING"),
     overlayGroups = as.character(overlayGroups.WMS.layerIDS),
     layersControlOptions(autoZIndex = TRUE, collapsed = F) 
   ) %>% 
@@ -49,9 +50,9 @@ leaflet.object <-
   
   leaflet.extras::addMeasurePathToolbar()%>%
   
-  leaflet::addScaleBar("bottomleft")%>%
+  leaflet::addScaleBar("bottomright")%>%
   addMiniMap(tiles = "OpenStreetMap", toggleDisplay = TRUE,
-             position = "bottomleft") %>%
+             position = "topright") %>%
   htmlwidgets::onRender("
     function(el, x) {
       myMap = this;

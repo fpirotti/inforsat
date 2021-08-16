@@ -26,21 +26,8 @@ ui <-  dashboardPage(
                
                selectInput(inputId = 'dayselected',
                            label = 'Choose Image by list', 
-                           choices = images.lut %>% filter(tile == tt[[1]]) %>% select(date) ),
-               
-               airDatepickerInput(  
-                 inputId = "datePicker", 
-                 label ="Choose image by calendar",
-                 range = c( first(as.Date(images.lut$date)), Sys.Date()),
-                 value = last(as.Date(images.lut$date)), 
-                 todayButton=T,
-                 addon=NULL,
-                 #position = "bottom right", 
-                 startView = last(as.Date(images.lut$date)),
-                 highlightedDates = as.Date(images.lut$date),
-                 disabledDates = 
-                   as.Date( setdiff( as.character( seq(first(as.Date(images.lut$date)), Sys.Date(), by="days") ) , as.character(as.Date(images.lut$date))  ) )
-               ),
+                           choices = NULL ),
+ 
                div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", 
                    materialSwitch( 
                      inputId = "freezeScale",

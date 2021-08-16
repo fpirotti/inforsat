@@ -2,7 +2,7 @@ library(sf)
 library(terra)
 library(shinydashboard)
 library(shinydashboardPlus)
-library(dplyr)
+library(tidyverse)
 library(geojsonsf)
 library(shinyjqui)
 library(plotly)
@@ -16,6 +16,7 @@ library(doParallel)
 library(sf)
 library(shinyalert) 
 library(waiter)
+library(circlize)
 
 radio2expression<- list( "NDVI" = "(B08-B04)/(B08+B04)", 
                          "RGI" = "B04/B03", 

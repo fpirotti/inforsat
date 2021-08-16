@@ -128,7 +128,8 @@ createIndexFile<-function(session){
       gdalUtils::gdalwarp(
         ii[[1]],
         outRaster,
-        r = "bilinear",
+        r = "near",
+       # r = "bilinear",
         te = as.numeric(session$input$mymap_bounds[ c(4,3,2,1)]),
         te_srs = (st_crs(4326))$proj4string ,
         t_srs = st_crs(3857)$proj4string,
