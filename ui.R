@@ -27,12 +27,18 @@ ui <-  dashboardPage(
                selectInput(inputId = 'dayselected',
                            label = 'Choose Image by list', 
                            choices = NULL ),
- 
+              
                div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", 
+         
+                  selectInput(inputId = 'resampling',
+                               label = 'Resampling method (GDAL)',
+                               choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") 
+                   ),
                    materialSwitch( 
                      inputId = "freezeScale",
                      label = "Scala fissa",
                      status = "primary",
+                     value=T,
                      right = F, inline = T
                    ),
                    materialSwitch( 
@@ -52,7 +58,7 @@ ui <-  dashboardPage(
       ),   
       style = "bordered", 
       icon = icon("table"),
-      width = "500px", 
+      width = "650px", 
       label = "Layers",
       animate = animateOptions(
         enter = animations$fading_entrances$fadeIn,
@@ -71,23 +77,29 @@ ui <-  dashboardPage(
     #      solidHeader = TRUE,
     #      collapsible = TRUE
     # ) ,
-    box( id= "LayersBox2",
-         title = HTML(paste0(icon("gears"), " Layers      ")), 
-         closable = F,  width = NULL,
-         collapsed = T,
-         enable_label = F,  
-         background = "black",
-         #label_status = "danger",
-         #status = "primary",
-         solidHeader = TRUE,
-         collapsible = TRUE,
-
-           
-         img(id="legendIndex", style="width:100%;"),
-         
-         actionButton("calcola", "Calcola il grafico") ,
-         downloadButton("scaricaPoligoni", "Scarica Poligoni"),
-         downloadButton("scaricaIndice", "Raster Indice")
+    
+    dropdown(   
+      style = "bordered", 
+      icon = icon("gears"),
+      label = "Zonal Statistics",
+      animate = animateOptions(
+        enter = animations$fading_entrances$fadeIn,
+        exit = animations$fading_exits$fadeOut,
+        duration=0.5
+      ),
+      
+      
+      pickerInput(
+        inputId = "Id083",
+        label = "Statistics to calculate",
+        choices = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
+        selected = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
+        multiple = TRUE
+      ),
+      actionButton("calcola", "Calcola il grafico") ,
+      downloadButton("scaricaPoligoni", "Scarica Poligoni"),
+      downloadButton("scaricaIndice", "Raster Indice")
+      
     ) 
     # dropdown(
     #   actionButton("aggiorna", "Aggiorna la mappa"),
@@ -162,7 +174,7 @@ ui <-  dashboardPage(
     shinyjs::useShinyjs(),
     
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fvcfcfd"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fvcfd"),
     tags$head(tags$script(src="myfuncts.js?v=3c")) ,
     # Application title
     #theme = "solar_bootstrap.css",
@@ -198,6 +210,7 @@ ui <-  dashboardPage(
                                    status = "warning",
                                    solidHeader = TRUE,
                                    collapsible = TRUE, 
+                    #               dygraphOutput("dygraph"),
                                    plotlyOutput("graph1" )
           ) 
       ),

@@ -64,8 +64,16 @@ server <- function(input, output, session) {
   
   session$userData$indexfile <- file.path(pathsTemp, sprintf("%s.tif", session$token))
   session$userData$mapfile   <- file.path(pathsTemp, sprintf("%s.map", session$token))
+  myPolygons <- NULL
+  myPolygons.tot.area <- NULL
+  ### create polygons -----
+   observeEvent(input$mymap_draw_all_features,  {
+    myPolygons <<-  geojson_sf(jsonify::to_json(input$mymap_draw_all_features, unbox = T)) 
+    myPolygons.tot.area <<- as.numeric(sum(st_area(myPolygons))/1000000) 
+    print(myPolygons)
+  })
+ 
   
-  myPolygons<-NULL
   outIndexFile<- file.path(pathsTemp, sprintf("%s.", session$token) )
  
   
@@ -75,17 +83,27 @@ server <- function(input, output, session) {
     leaflet.object  
   })#chiudo output mymap  
   
-  
+  ### disegna GRAFICO PLOTLY ------
   output$graph1 <- renderPlotly({ 
     req(reacts$table.index)
     tb<-reacts$table.index
-    tb$Date<-as.Date(tb$Date,  origin = "1970-01-01")
+    #tb$Date<-as.Date(tb$Date,  origin = "1970-01-01")
     tb$FID<-as.factor(tb$FID)
-    p <- ggplot( tb, aes_string(x="Date", y="q50", color="FID" )  )
-    p <- p + geom_crossbar(aes_string(ymin = "q25", ymax = "q75") )
-    p <- p + geom_point(aes(x=Date, y=mean) )
-    p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90") ) + theme_bw()
-    ggplotly(p)
+    tb<-na.omit(tb) 
+    if(nrow(tb)<1){
+      shinyalert::shinyalert(title = "Warning",
+                             text = "No overlapping data with areas... did you choose the correct tile?",
+                             type = "warning")
+      return()
+    }
+    p <- ggplot( tb, aes_string(x="Date", y="q50", color="FID" )  ) + ylab("Index statistics") + 
+      ggtitle( sprintf("TILE %s - %d images, %d areas, total size=%.2f km2", 
+                       input$tile, isolate(nrow(reacts$activeLUT.Table)), nrow(myPolygons), myPolygons.tot.area ) )
+    p <- p + geom_crossbar(aes_string(ymin = "q25", ymax = "q75"), position_dodge(width = 0.9) )
+    p <- p + geom_point(aes(x=Date, y=Mean), position = position_dodge(width = 0.9) )
+    p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90"), position = position_dodge(width = 0.9) ) + theme_bw()
+ 
+    ggplotly(p)  
   })
   #observer del bottone che mostra il pannello dei controlli/risultati
   observeEvent(reacts$table.index, {
@@ -173,32 +191,19 @@ server <- function(input, output, session) {
     <a href = 'mailto: francesco.pirotti@unipd.it'>Email</a>
     </div>", 
     type = "info")})
-  
-  observeEvent(input$mymap_draw_deleted_feature,{
-    myPolygons <<- NULL
-    print("deleted polygons")
-  })
-  #OBSERVE della mappa
-  observeEvent(input$mymap_draw_new_feature,{ 
- 
-    #evento click
-    gc<-input$mymap_draw_new_feature
-    event <- input$mymap_click
-    ## è facilmente castabile da geojson a sf e aggiungo a lista myPolygons
-    if(is.null(myPolygons)){
-      myPolygons <<- geojson_sf(jsonify::to_json(gc, unbox = T))
-    } else {
-      myPolygons <<- rbind(myPolygons, geojson_sf(jsonify::to_json(gc, unbox = T)))
-    }
-    
-  })
-  
+   
   ### SCARICA POLIGONI -----
   output$scaricaPoligoni <- downloadHandler(
     filename = function() {
        sprintf("%s.gpkg", session$token)
     },
     content = function(file) {
+      
+      dt.final3 <- isolate( reacts$table.index )
+      
+      dt.final4 <-  dt.final3 %>% 
+        pivot_wider(names_from = Date, values_from = setdiff(names(dt.final3), c("FID","Date")) )
+      
       st_write(myPolygons,  file, append=F  )
     }
   )
@@ -216,14 +221,15 @@ server <- function(input, output, session) {
   )
 
   
-   
+  
   #OBSERVE CALCOLA GRAFICO indici osservando evento del pulsante calcola
   ### zonal statistics ------
   observeEvent(input$calcola,{
     
     #faccio un controllo se il poligono è disegnato
-    if(length(myPolygons)==0){
-      shinyalert::shinyalert(title = "Please draw one or more rectangles or polygons to define areas in which to calculate temporal statistics ", 
+    if(is.null(myPolygons.tot.area) || length(myPolygons)==0){
+      shinyalert::shinyalert(title="Warning",
+                             text = "Please draw one or more rectangles or polygons to define areas in which to calculate temporal statistics ", 
                              type = "warning")
       return()
       }
@@ -232,10 +238,11 @@ server <- function(input, output, session) {
       #apro il pannello risultati
       shinyjs::show("risultati")
        
-      tot.ha <- sum(st_area(myPolygons))/10000
-   
-      if( as.numeric(tot.ha) >100){
-        shinyalert::shinyalert("Sorry", paste0("Your area is more than 100 ha, (you have", round(tot.ha) ,"ha in total, please try a smaller area or contact francesco.pirotti@unipd.it, thankyou."))
+      
+      
+      if( as.numeric(myPolygons.tot.area) >4){
+        shinyalert::shinyalert("Sorry", paste0("Your area is more than 4 km2, (you have", round(myPolygons.tot.area,2) ,"km2 in total, 
+                                               please try a smaller area or contact francesco.pirotti@unipd.it, thankyou."))
         return(NULL)
       }
       withProgress(message = 'Estracting data from polygons', value = 0, {    
@@ -249,22 +256,32 @@ server <- function(input, output, session) {
           ww<-match( bands2use, bands  )
           tt2 <- tt[[ww]]
           rr <-  terra::extract(tt2, terra::vect( st_transform(myPolygons, 32632) ))
-          names(rr) <- c("id", bands2use)
+          names(rr) <- c("FID", bands2use)
           data.c[[as.character(reacts$activeLUT.Table$date[[i]])]]<-rr
-        }
-        
+        } 
       }) 
-      reacts$table.index <- data.table::rbindlist(data.c, idcol = "Date")
-      reacts$table.index$Date <- as.Date( reacts$table.index$Date )
-
-      mYexpression<-gsub("(B[018][0-9A])",   "  reacts$table.index[['\\1']]  " ,    
+      dt.final <- data.table::rbindlist(data.c, idcol = "Date")
+      dt.final$Date <- as.Date( dt.final$Date )
+      
+      mYexpression<-gsub("(B[018][0-9A])",   "  dt.final[['\\1']]  " ,    
                          session$input$indici) 
+ 
+      dt.final$Index <- eval(parse(text=  mYexpression) ) 
+
+      dt.final2 <- dt.final %>% 
+        dplyr::select(FID, Date, Index, CLD, SNW) %>% 
+        dplyr::group_by(FID, Date) %>% 
+        dplyr::summarize(   
+          x = statsFunction(Index), 
+          q = c("Mean", "SD", "Min", "q10", "q25", "q50", "q75", "q90", "Max") 
+          ) 
       
-      reacts$table.index$Index <- eval(parse(text=  mYexpression) )   
-   
+      tb <-  dt.final2 %>% 
+        pivot_wider(names_from = q, values_from = x)
+      
+      reacts$table.index <- tb 
       #<-getIndice(session, terra::vect(myPolygons) )
-      
-      tb<-isolate(  reacts$table.index )
+       
       if(!is.null(tb) && nrow(tb)==nrow(myPolygons)){
         
         shinyalert::shinyalert(title = "Nessun risultato", 

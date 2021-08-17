@@ -52,4 +52,8 @@ processingMasking<-data.frame(
       "PROCESSING \"LUT_4=0:0,1:0,2:0,3:0,4:255,5:255,6:255,7:255,8:0,9:0,10:0,11:0\"")
 )
 
+statsFunction <- function(x){
+  return( c(mean=mean(x, na.rm=T), sd=sd(x, na.rm=T), quantile(x, c(0, 0.1, 0.25, 0.5, 0.75, 0.9, 1), na.rm=T)))
+}
+
 pathsTemp<-"/archivio/tmp/ms_tmp"

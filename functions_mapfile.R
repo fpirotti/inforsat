@@ -82,7 +82,11 @@ calcMapserverScale4index<-function(session, r){
 
 createIndexFile<-function(session){
    
-   
+  if( !shiny::isTruthy(session$input$dayselected) ){
+    shinyalert("Warning", "Select an image using the date drop down menu in the 'Layers' panel on the left.")
+    return()
+  }
+  
   shinyjs::show("scaricaIndice")
  
   nT <-  images.lut %>% filter(date == session$input$dayselected, tile==session$input$tile )
@@ -128,7 +132,7 @@ createIndexFile<-function(session){
       gdalUtils::gdalwarp(
         ii[[1]],
         outRaster,
-        r = "near",
+        r = session$input$resampling,
        # r = "bilinear",
         te = as.numeric(session$input$mymap_bounds[ c(4,3,2,1)]),
         te_srs = (st_crs(4326))$proj4string ,

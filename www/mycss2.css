@@ -17,12 +17,15 @@
   color:#000 !important;
 }
 */
-
+.shiny-notification-panel{
+  width:100% !important;
+  background-color: green; 
+}
 .leaflet-control-layers{
   font-size: small;
 }
 #mymap { 
-  height:calc(100vh - 130px) !important;
+  height:calc(100vh - 100px) !important;
   overflow: hidden; 
 }
    

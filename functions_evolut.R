@@ -119,7 +119,7 @@ compositeCreate<-function(session){
       }
     }
     
-    plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", list(as.integer(1)) )
+    #plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", list(as.integer(1)) )
     
     plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "addTraces", list(
       list(
