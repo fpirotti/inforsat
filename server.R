@@ -1,10 +1,15 @@
 # Define server logic required to draw a histogram 
 server <- function(input, output, session) { 
   #source("functions_auth.R", local=T)
-  shinyjs::hide("scaricaIndice")
-  shinyjs::hide("scaricaPoligoni")
+  #shinyjs::hide("scaricaIndice")
+  #shinyjs::hide("scaricaPoligoni")
   shinyjs::addCssClass(id="scaricaIndice", "sideButtons")
+  shinyjs::disable(selector = "#scaricaIndice")
+  shinyjs::disable(selector = "#scaricaPoligoni")
+  shinyjs::disable(selector = "#scaricaTabellaValori")
   shinyjs::addCssClass(id="scaricaPoligoni", "sideButtons")
+  
+  
   #questi servono per estrarre il valore dagli event e observe event
   
   reacts<- reactiveValues( table.index=NULL,   IS.LOGGED=F, IS.UNIPD=F,
@@ -67,10 +72,13 @@ server <- function(input, output, session) {
   myPolygons <- NULL
   myPolygons.tot.area <- NULL
   ### create polygons -----
-   observeEvent(input$mymap_draw_all_features,  {
-    myPolygons <<-  geojson_sf(jsonify::to_json(input$mymap_draw_all_features, unbox = T)) 
-    myPolygons.tot.area <<- as.numeric(sum(st_area(myPolygons))/1000000) 
-    print(myPolygons)
+   observeEvent({
+     input$mymap_draw_all_features
+     input$mymap_draw_stop },  {
+       
+       myPolygons <<-  geojson_sf(jsonify::to_json(input$mymap_draw_all_features, unbox = T)) 
+       myPolygons.tot.area <<- as.numeric(sum(st_area(myPolygons))/1000000) 
+
   })
  
   
@@ -86,39 +94,64 @@ server <- function(input, output, session) {
   ### disegna GRAFICO PLOTLY ------
   output$graph1 <- renderPlotly({ 
     req(reacts$table.index)
-    tb<-reacts$table.index
-    #tb$Date<-as.Date(tb$Date,  origin = "1970-01-01")
+    req(nrow(reacts$table.index)>0)
+    tb<-reacts$table.index 
     tb$FID<-as.factor(tb$FID)
-    tb<-na.omit(tb) 
-    if(nrow(tb)<1){
-      shinyalert::shinyalert(title = "Warning",
-                             text = "No overlapping data with areas... did you choose the correct tile?",
-                             type = "warning")
-      return()
-    }
-    p <- ggplot( tb, aes_string(x="Date", y="q50", color="FID" )  ) + ylab("Index statistics") + 
+    dates <-  (unique(as.character(tb$Date) ))
+    
+    updatePickerInput(session=session, "datesInPlot", choices = dates, 
+                      selected=dates   )
+    
+    tb <- tb %>%
+      dplyr::select(FID, Date, Index, CLD, SNW) %>%
+      filter(CLD <= input$cloudsInPlot, SNW <= input$snowInPlot )  
+      # dplyr::group_by(FID, Date) %>%
+      # dplyr::summarize(
+      #   x = statsFunction(Index),
+      #   q = c("Mean", "SD", "Min", "q10", "q25", "q50", "q75", "q90", "Max")
+      # ) %>%
+      # pivot_wider(names_from = q, values_from = x)
+     
+    
+    xaxis <- ifelse(input$xPlotAxis, "Date", "as.factor(Date)")
+    p <- ggplot( tb ) + 
+      ylab(sprintf("Values of %s statistics",  input$indici) ) + 
+      xlab("Date") +
       ggtitle( sprintf("TILE %s - %d images, %d areas, total size=%.2f km2", 
-                       input$tile, isolate(nrow(reacts$activeLUT.Table)), nrow(myPolygons), myPolygons.tot.area ) )
-    p <- p + geom_crossbar(aes_string(ymin = "q25", ymax = "q75"), position_dodge(width = 0.9) )
-    p <- p + geom_point(aes(x=Date, y=Mean), position = position_dodge(width = 0.9) )
-    p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90"), position = position_dodge(width = 0.9) ) + theme_bw()
+                       input$tile, isolate(nrow(reacts$activeLUT.Table)), nrow(myPolygons), myPolygons.tot.area ) ) +
+      geom_boxplot( aes_string(x=xaxis, y="Index", color="FID", group="FID" ) , outlier.shape=NA,
+                    position = "dodge") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) 
+     
+      ggplotly(p) 
+       
+    
  
-    ggplotly(p)  
+    # p <- ggplot( tb, aes_string(x="Date", y="q50", color="FID" )  ) + ylab(sprintf("Values of %s statistics",  input$indici) ) + 
+    #   ggtitle( sprintf("TILE %s - %d images, %d areas, total size=%.2f km2", 
+    #                    input$tile, isolate(nrow(reacts$activeLUT.Table)), nrow(myPolygons), myPolygons.tot.area ) )
+    # p <- p + geom_crossbar(aes_string(ymin = "q25", ymax = "q75"), position = position_dodge2(preserve = "single", width = 2) )
+    # p <- p + geom_point(aes(x=Date, y=Mean), position = position_dodge2(preserve = "single", width = 2) )
+    # p <- p + geom_errorbar(aes_string(ymin = "q10", ymax = "q90"), position = position_dodge2(preserve = "single", width = 2) ) + theme_bw()
+    # 
+      
   })
+  
   #observer del bottone che mostra il pannello dei controlli/risultati
   observeEvent(reacts$table.index, {
     print("SDFSDFSDFDSFDSDF")
-    })
- 
-  
-  observeEvent(input$showBtn2, {
-    shinyjs::toggle('risultati')
   })
-  
+ 
+  # 
+  # observeEvent(input$showBtn2, {
+  #   shinyjs::toggle('risultati')
+  # })
+  # 
   observeEvent(input$leafletRendered, { 
      
   
-    updateBox( "myBox", action ="toggle")   
+    updateBox( "myBoxAnalytics", action ="remove")   
  
     shinyjs::runjs("  
                      $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
@@ -203,13 +236,25 @@ server <- function(input, output, session) {
       
       dt.final4 <-  dt.final3 %>% 
         pivot_wider(names_from = Date, values_from = setdiff(names(dt.final3), c("FID","Date")) )
-      
+      browser()
       st_write(myPolygons,  file, append=F  )
     }
   )
   
- 
-
+  
+  ### SCARICA tabella -----
+  output$scaricaTabellaValori <- downloadHandler(
+    filename = function() { 
+      sprintf("%s.xlsx", session$token)
+    },
+    content = function(file) { 
+      if(is.null(reacts$table.index) || nrow(reacts$table.index)==0 ){
+        shinyalert("Warning", "No table available... did you draw the areas and calculate indices?", type="warning")
+        return()
+      }
+      writexl::write_xlsx(  reacts$table.index, file )
+    }
+  )
   ### SCARICA RASTER -----
   output$scaricaIndice <- downloadHandler(
     filename = function() { 
@@ -226,73 +271,77 @@ server <- function(input, output, session) {
   ### zonal statistics ------
   observeEvent(input$calcola,{
     
+
+    
     #faccio un controllo se il poligono è disegnato
     if(is.null(myPolygons.tot.area) || length(myPolygons)==0){
       shinyalert::shinyalert(title="Warning",
                              text = "Please draw one or more rectangles or polygons to define areas in which to calculate temporal statistics ", 
                              type = "warning")
+      
+      shinyjs::disable(selector = "#scaricaPoligoni")
       return()
       }
 
-    else{
-      #apro il pannello risultati
-      shinyjs::show("risultati")
-       
+    #apro il pannello risultati
+    shinyjs::show("risultati")
+     
+    updateBox( "myBoxAnalytics", action ="restore") 
+    if (input$myBoxAnalytics$collapsed)  updateBox( "myBoxAnalytics", action ="toggle")    
+    shinyjs::runjs("$('#shiny-notification-panel')")
+    
+    if( as.numeric(myPolygons.tot.area) >4){
+      shinyalert::shinyalert("Sorry", paste0("Your area is more than 4 km2, (you have", round(myPolygons.tot.area,2) ,"km2 in total, 
+                                             please try a smaller area or contact francesco.pirotti@unipd.it, thankyou."))
       
-      
-      if( as.numeric(myPolygons.tot.area) >4){
-        shinyalert::shinyalert("Sorry", paste0("Your area is more than 4 km2, (you have", round(myPolygons.tot.area,2) ,"km2 in total, 
-                                               please try a smaller area or contact francesco.pirotti@unipd.it, thankyou."))
-        return(NULL)
-      }
-      withProgress(message = 'Estracting data from polygons', value = 0, {    
-        nimages <- nrow(reacts$activeLUT.Table)
-        data.c<- list()
-        for(i in 1:nimages){
-          setProgress(i/(nimages+3), detail = sprintf("Image %s of %s...", i, nimages) )  
-          tt <-terra::rast( reacts$activeLUT.Table$VRT[[i]])
-          bands <- names(reacts$activeLUT.Table$bands[[i]])
-          bands2use <- c("CLD","SNW",  bands2use<- unique( stringr::str_extract_all(   session$input$indici , "B[018][0-9A]")[[1]] ) )
-          ww<-match( bands2use, bands  )
-          tt2 <- tt[[ww]]
-          rr <-  terra::extract(tt2, terra::vect( st_transform(myPolygons, 32632) ))
-          names(rr) <- c("FID", bands2use)
-          data.c[[as.character(reacts$activeLUT.Table$date[[i]])]]<-rr
-        } 
-      }) 
-      dt.final <- data.table::rbindlist(data.c, idcol = "Date")
-      dt.final$Date <- as.Date( dt.final$Date )
-      
-      mYexpression<-gsub("(B[018][0-9A])",   "  dt.final[['\\1']]  " ,    
-                         session$input$indici) 
- 
-      dt.final$Index <- eval(parse(text=  mYexpression) ) 
+      shinyjs::disable(selector = "#scaricaPoligoni")
+      return(NULL)
+    }
+    withProgress(message = 'Estracting data from polygons', value = 0, {    
+      nimages <- nrow(reacts$activeLUT.Table)
+      data.c<- list()
+      for(i in 1:nimages){
+        setProgress(i/(nimages+3), detail = sprintf("Image %s of %s...", i, nimages) )  
+        tt <-terra::rast( reacts$activeLUT.Table$VRT[[i]])
+        bands <- names(reacts$activeLUT.Table$bands[[i]])
+        bands2use <- c("CLD","SNW",  bands2use<- unique( stringr::str_extract_all(   session$input$indici , "B[018][0-9A]")[[1]] ) )
+        ww<-match( bands2use, bands  )
+        tt2 <- tt[[ww]]
+        rr <-  terra::extract(tt2, terra::vect( st_transform(myPolygons, 32632) ))
+        names(rr) <- c("FID", bands2use)
+        data.c[[as.character(reacts$activeLUT.Table$date[[i]])]]<-rr
+      }  
+    }) 
+    dt.final <- data.table::rbindlist(data.c, idcol = "Date")
+    dt.final$Date <- as.Date( dt.final$Date )
+    
+    mYexpression<-gsub("(B[018][0-9A])",   "  dt.final[['\\1']]  " ,    
+                       session$input$indici) 
 
-      dt.final2 <- dt.final %>% 
-        dplyr::select(FID, Date, Index, CLD, SNW) %>% 
-        dplyr::group_by(FID, Date) %>% 
-        dplyr::summarize(   
-          x = statsFunction(Index), 
-          q = c("Mean", "SD", "Min", "q10", "q25", "q50", "q75", "q90", "Max") 
-          ) 
+    dt.final$Index <- eval(parse(text=  mYexpression) ) 
+
+    tb <- dt.final %>% dplyr::select(FID, Date, Index, CLD, SNW)
+    
+     
+    if(!is.null(tb) && nrow(tb)==nrow(myPolygons)){
+      shinyjs::disable(selector = "#scaricaPoligoni")
+      shinyalert::shinyalert(title = "Nessun risultato", 
+                             type = "warning")
+      return()
       
-      tb <-  dt.final2 %>% 
-        pivot_wider(names_from = q, values_from = x)
+    }
+    tb<-na.omit(tb) 
+    if(nrow(tb)<1){
+      shinyalert::shinyalert(title = "Warning",
+                             text = "No overlapping data with areas... did you choose the correct tile?",
+                             type = "warning")
+      return()
+    }
+    reacts$table.index <- tb
+    shinyjs::enable(selector = "#scaricaPoligoni")
+    #shinyjs::show("scaricaIndice")
+    shinyjs::enable(selector = "#scaricaTabellaValori")
       
-      reacts$table.index <- tb 
-      #<-getIndice(session, terra::vect(myPolygons) )
-       
-      if(!is.null(tb) && nrow(tb)==nrow(myPolygons)){
-        
-        shinyalert::shinyalert(title = "Nessun risultato", 
-                               type = "warning")
-        return()
-        
-      }
-      
-      shinyjs::show("scaricaIndice")
-       
-    }#chiudo else
   })
   
   # ### SPYGLASS -----

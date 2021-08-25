@@ -1,6 +1,5 @@
 source("functions_libraries.R")
 
-source("functions_leaflet.map.R")
 source("functions_mapfile.R")
 source("functions_evolut.R")
 ## absolute path with all S2 images
@@ -36,6 +35,7 @@ load("images.lut.rda")
 #images.lut<-NULL
 
 tiles.geom <- st_read("tilesS2.gpkg",  query = sprintf("SELECT * FROM \"tilesS2\" WHERE name in ('%s')", paste0(collapse = "','", levels(images.lut$tile) )  )  )
+
 
  
 
@@ -179,6 +179,7 @@ update.Image.LUT <- function(verbose = F) {
   save(images.lut, file = "images.lut.rda")
   
 }
-#images.lut <- images.lut %>% arrange(date, tile) %>% distinct(date, tile,  .keep_all = TRUE)
-#update.Image.LUT(T)
-#save(images.lut, file = "images.lut.rda")
+
+
+
+source("functions_leaflet.map.R")

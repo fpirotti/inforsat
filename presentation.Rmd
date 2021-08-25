@@ -1,16 +1,26 @@
-<html>
+---
+title: "Presentation Ninja"
+subtitle: "⚔<br/>with xaringan"
+author: "Yihui Xie"
+institute: "RStudio, PBC"
+date: "2016/12/12 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
 
-<head>
-<title>Title</title>
-</head>
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
 
-<body>
-
-<!--begin.rcode echo=FALSE, verbose=FALSE, messages=FALSE, include=FALSE 
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
 library(plotly)
 library(RCurl)
 library(jsonlite)
-#library(dygraphs)
+library(dygraphs)
 library(htmlwidgets)
 library(dplyr)
 library(tidyverse) 
@@ -104,13 +114,10 @@ data_hospitalized$result$records$Date <- as.Date(do.call("rbind", strsplit(as.ch
 data_hospitalized$result$records[is.na(data_hospitalized$result$records)]<-0
 
 data_hospitalized.final  <- data_hospitalized$result$records %>% group_by(Age_group)  %>% arrange( Date, Age_group )  %>% mutate( 
-  event_after_1st_dose = event_after_1st_dose ,
-  event_after_2nd_dose = event_after_2nd_dose ,
-  event_for_not_vaccinated = event_for_not_vaccinated ,
-  coeff = population.byAgeGroup.2019[as.character(Age_group)],
-  # CS.patients.1stDose=cumsum(event_after_1st_dose) , 
-  # CS.patients.2nDose=cumsum(event_after_2nd_dose) ,
-  # CS.patients.NV=cumsum(event_for_not_vaccinated) , 
+  
+  CS.patients.1stDose=cumsum(event_after_1st_dose) , 
+  CS.patients.2nDose=cumsum(event_after_2nd_dose) ,
+  CS.patients.NV=cumsum(event_for_not_vaccinated) , 
  # NormCS.1stDose=cumsum(event_after_1st_dose)/   population.byAgeGroup.2019[as.character(Age_group)] *100 ,
  # NormCS.2nDose=cumsum(event_after_2nd_dose)/ population.byAgeGroup.2019[as.character(Age_group)]*100 ,
 #  NormCS.NV=cumsum(event_for_not_vaccinated)/   population.byAgeGroup.2019[as.character(Age_group)]*100 , 
@@ -125,72 +132,37 @@ data.final <- merge(as.data.frame(data_hospitalized.final),
 data.final[["1st_Dose.Norm"]] <-  round(data.final$event_after_1st_dose / data.final$first_dose.cumsum * 100000)
 data.final[["2nd_Dose.Norm"]] <-  round(data.final$event_after_2nd_dose / data.final$second_dose.cumsum * 100000)
 data.final[["NV.Norm"]] <-  round(data.final$event_for_not_vaccinated / data.final$not_vaccinated * 100000)
-
  
 data.final2 <- data.final  %>% arrange( Date, Age_group, Type_of_event ) %>% 
   select(Date, Age_group, Week, Type_of_event, 
-         `1st_dose`=event_after_1st_dose, 
-         `2nd_dose`=event_after_2nd_dose, 
+         `1st_dose`=event_after_1st_dose, `2nd_dose`=event_after_2nd_dose, 
          NV=event_for_not_vaccinated, 
-         coeff
-        ) 
+         TotN.Vaccinated.1stDose=first_dose.cumsum,
+         TotN.Vaccinated.2ndDose=second_dose.cumsum,
+         TotN.NotVaccinated=not_vaccinated,
+         `1st_Dose.Norm`, `2nd_Dose.Norm`, NV.Norm) 
 
-data.final.norm <- data.final  %>% arrange( Date, Age_group, Type_of_event ) %>% 
-  select(Date, Age_group, Week, Type_of_event, 
-         `1st_Dose.Norm`, 
-        `2nd_Dose.Norm`, 
-        NV.Norm,
-        coeff
-        ) 
 
-data.final2.m <- reshape::melt(data.final2, id.vars=c("Age_group", "Week", "Type_of_event", "Date", "coeff"), variable_name="Doses")%>% filter(Date > "2021-06-01")
-data.final.norm.m <- reshape::melt(data.final.norm, id.vars=c("Age_group", "Week", "Type_of_event", "Date", "coeff"), variable_name="Doses")%>% filter(Date > "2021-06-01")
+data.final2.m <- reshape::melt(data.final2, id.vars=c("Age_group", "Week", "Type_of_event", "Date"))
 
- 
-fig1 <- ggplot( data.final2.m , aes(x=Date) ) + 
-  ggtitle("Hospitalized/Death COVID Cases NOT normalized") +
-  geom_bar(position = position_dodge2(preserve = "single"), 
-           stat="identity", aes(y=value, group=Doses, fill=Doses)) + 
-  scale_y_continuous(
-    name = "Absolute number of people", 
-    sec.axis = sec_axis(~.*coeff, name="Price ($)")
-  ) +
-  facet_wrap( . ~ Age_group+Type_of_event, ncol=2, scales="free") + 
+
+
+fig <- ggplot(data.final2.m %>% filter(Date > "2021-04-01"), aes(x=Date)) + 
+  geom_bar(stat="identity", aes(y=value, group=Age_group, color=Age_group)) +
+  facet_wrap( . ~ variable+Type_of_event, ncol=2, scales="free") + 
   theme_bw()
 
 
-fig2 <- ggplot(data.final.norm.m %>% filter(Date > "2021-06-01"), aes(x=Date),
-               sec.axis = sec_axis(~.*coeff, name="Price ($)")) + 
-  ggtitle("Hospitalized/Death COVID Cases Normalized by proportion of Vaccinated vs Unvaccinated per Age group") +
-  geom_bar(position = position_dodge2(preserve = "single"), 
-           stat="identity", aes(y=value, group=Doses, fill=Doses)) + 
-  facet_wrap( . ~ Age_group+Type_of_event, ncol=2, scales="free") + 
-  theme_bw()
 
-end.rcode-->
-
-<p>All date are from official sources:
-Population in 2020:
-https://www.cbs.gov.il/en/mediarelease/pages/2020/population-of-israel-on-the-eve-of-2021.aspx <br>
-https://boardsgenerator.cbs.gov.il/Resources/Mifkad/profiles/rep_e_000000.pdf   <br>
-data was actualized to 2021  assuming a 2% growth rate and age distribution. <br> <br>
-
-</p>
-
-
-<h1>Number of people in hospitalized or dead the week before the date (x100'000 people of the same age group). NB without accounting for proportion of vaccinated vs non-vaccinated</h1>
-
-<!--begin.rcode  fig1, fig.height = 20, dpi=150, fig.width =12, echo=FALSE, verbose=FALSE, messages=FALSE  
-fig1
-end.rcode-->
+```
  
-<h1>Number of people in hospitalized or dead the week before the date (x100'000 people of the same age group and weighted by proportion of vaccinated vs non-vaccinated)</h1> 
-By weighting we mean that we accounted for to proportion of vaccinated vs non vaccinated in the age group... e.g. if 90% of people are vaccinated, and 90 out of 100 hospitalized patients are vaccinated and 10 are not, then the normalized numbers would be the same as the real numbers... if 50 out of 100 hospitalized patients are vaccinated, then the normalized numbers would be weighted accordingly.
-<hr>
-<!--begin.rcode  fig2, fig.height = 20, dpi=150, fig.width =12, echo=FALSE, verbose=FALSE, messages=FALSE  
-fig2
-end.rcode-->
- 
+Image credit: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sharingan_triple.svg)
 
-</body>
-</html>
+---
+class: center, middle
+
+# xaringan
+```{r}
+fig
+```
+

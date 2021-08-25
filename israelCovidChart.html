@@ -1,0 +1,104 @@
+<html>
+
+<head>
+<style type="text/css">
+.inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.left {
+  text-align: left;
+}
+.right {
+  text-align: right;
+}
+.center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Title</title>
+</head>
+
+<body>
+
+
+
+<p>All date are from official sources:
+Population in 2020:
+https://www.cbs.gov.il/en/mediarelease/pages/2020/population-of-israel-on-the-eve-of-2021.aspx <br>
+https://boardsgenerator.cbs.gov.il/Resources/Mifkad/profiles/rep_e_000000.pdf   <br>
+data was actualized to 2021  assuming a 2% growth rate and age distribution. <br> <br>
+
+</p>
+
+
+<h1>Number of people in hospitalized or dead the week before the date (x100'000 people of the same age group). NB without accounting for proportion of vaccinated vs non-vaccinated</h1>
+
+<div class="chunk" id="fig1"><div class="rcode"><div class="warning"><pre class="knitr r">## Warning in . * coeff: longer object length is not a multiple of shorter object
+## length
+
+## Warning in . * coeff: longer object length is not a multiple of shorter object
+## length
+
+## Warning in . * coeff: longer object length is not a multiple of shorter object
+## length
+</pre></div>
+<div class="error"><pre class="knitr r">## Error: transformation for secondary axes must be monotonic
+</pre></div>
+</div><div class="rimage default"><img src="figure/fig1-1.png" title="plot of chunk fig1" alt="plot of chunk fig1" class="plot" /></div></div>
+ 
+<h1>Number of people in hospitalized or dead the week before the date (x100'000 people of the same age group and weighted by proportion of vaccinated vs non-vaccinated)</h1> 
+By weighting we mean that we accounted for to proportion of vaccinated vs non vaccinated in the age group... e.g. if 90% of people are vaccinated, and 90 out of 100 hospitalized patients are vaccinated and 10 are not, then the normalized numbers would be the same as the real numbers... if 50 out of 100 hospitalized patients are vaccinated, then the normalized numbers would be weighted accordingly.
+<hr>
+<div class="chunk" id="fig2"><div class="rimage default"><img src="figure/fig2-1.png" title="plot of chunk fig2" alt="plot of chunk fig2" class="plot" /></div></div>
+ 
+
+</body>
+</html>

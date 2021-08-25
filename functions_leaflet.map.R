@@ -7,6 +7,8 @@ overlayGroups.WMS.layerIDS <- list("100"="S2 Color Composite",
 
 #as.character(overlayGroups.WMS.layerIDS)
 ###  OGGETTO LEAFLET DA METTERE SU SERVER.R ------
+
+
 leaflet.object <-
   leaflet()%>%
   
@@ -23,10 +25,24 @@ leaflet.object <-
                     group="Ortofoto 2015 Regione Veneto",
                     attribution = "© Regione Veneto"
   )%>%
+  leaflet::addPolygons(
+    data = as_Spatial(st_zm(tiles.geom))  , 
+    color = "#FF0000",
+    group="Sentinel-2 TILES",
+    weight = 3,
+    opacity = 0.8,
+    fill = FALSE,  
+    label = ~name,
+    labelOptions =labelOptions(
+      interactive = FALSE, 
+      textsize = "14px", 
+      permanent = TRUE),
+    options = pathOptions(interactive=F, clickable = F) 
+  ) %>% 
   leaflet::addLayersControl(
     position =("topright"),
     baseGroups = c("OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto", "BING"),
-    overlayGroups = as.character(overlayGroups.WMS.layerIDS),
+    overlayGroups = as.character(c(overlayGroups.WMS.layerIDS, "Sentinel-2 TILES")),
     layersControlOptions(autoZIndex = TRUE, collapsed = F) 
   ) %>% 
   
@@ -60,7 +76,7 @@ leaflet.object <-
 
       myMap.on('baselayerchange', baselayerChanged)
     }") %>%
-  leaflet::setView( lng=11.970140, lat=46.349963, zoom = 12)  
+  leaflet::setView( lng=11.970140, lat=46.349963, zoom = 8)  
 
 
 

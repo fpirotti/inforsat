@@ -17,7 +17,20 @@
   color:#000 !important;
 }
 */
-.shiny-notification-panel{
+
+.logo{
+  background-image: url("img/logocirgeoUNIPD-TESAF.png");
+  background-repeat: no-repeat; 
+    background-size: contain;
+    /* background-color: transparent !important; */
+    text-align: right !important;
+    background-blend-mode: multiply;
+}
+#scaricaPoligoni, #scaricaIndice, #scaricaTabellaValori {
+    margin: 5px 15px;
+    color: black;
+}
+#shiny-notification-panel{
   width:100% !important;
   background-color: green; 
 }

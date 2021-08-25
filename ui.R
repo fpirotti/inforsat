@@ -1,29 +1,29 @@
 # Define UI for application that draws a histogram
 #,
 library(shinydashboardPlus)
+library(shinyWidgets)
 ##required for ui
 tt <- table(images.lut$tile)
-tiles.labels = sprintf("%s (%s)", names(tt) , tt )
+tiles.labels = sprintf("%s (%s)", names(tt) , tt ) 
 tt <- names(tt)
 names(tt)<- tiles.labels
+
 ui <-  dashboardPage(
   #skin = "black",
-  
   preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#000000"),
-  header = dashboardHeader( title = "InforSAT" ), 
+  header = dashboardHeader( title = HTML("<b>InforSAT</b>") ), 
   sidebar=dashboardSidebar (
     
     collapsed = FALSE,
     minified = F,
     sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
                       label = "Search..."),
+    selectInput(inputId = 'tile',
+                label = 'Choose tile', 
+                choices = c("", tt) ),
     dropdown( 
       fluidRow(
-        column(6, 
-               selectInput(inputId = 'tile',
-                           label = 'Choose tile', 
-                           choices = c("", tt) ),
-               
+        column(6,   
                selectInput(inputId = 'dayselected',
                            label = 'Choose Image by list', 
                            choices = NULL ),
@@ -78,29 +78,35 @@ ui <-  dashboardPage(
     #      collapsible = TRUE
     # ) ,
     
-    dropdown(   
-      style = "bordered", 
-      icon = icon("gears"),
-      label = "Zonal Statistics",
-      animate = animateOptions(
-        enter = animations$fading_entrances$fadeIn,
-        exit = animations$fading_exits$fadeOut,
-        duration=0.5
-      ),
-      
-      
-      pickerInput(
-        inputId = "Id083",
-        label = "Statistics to calculate",
-        choices = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
-        selected = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
-        multiple = TRUE
-      ),
-      actionButton("calcola", "Calcola il grafico") ,
-      downloadButton("scaricaPoligoni", "Scarica Poligoni"),
-      downloadButton("scaricaIndice", "Raster Indice")
-      
-    ) 
+    # dropdown(   
+    #   style = "bordered", 
+    #   icon = icon("gears"),
+    #   label = "Zonal Statistics",
+    #   animate = animateOptions(
+    #     enter = animations$fading_entrances$fadeIn,
+    #     exit = animations$fading_exits$fadeOut,
+    #     duration=0.5
+    #   ),
+    #   
+    #   
+    #   pickerInput(
+    #     inputId = "Id083",
+    #     label = "Statistics to calculate",
+    #     choices = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
+    #     selected = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
+    #     multiple = TRUE
+    #   ),
+    # 
+    # ),
+    actionButton("calcola", "Source PLOT") ,
+    div( title="Download vector file with the areas that were drawn in the map as polygons. ", 
+       downloadButton("scaricaPoligoni", "Polygons")
+       ),
+    #downloadButton("scaricaIndice", "Raster Indice"),
+    div( title="Download an excel file with all values extracted from pixels inside the areas drawn in the map from all the images at different dates. ", 
+         downloadButton("scaricaTabellaValori", "Index Values Table") 
+         )
+    
     # dropdown(
     #   actionButton("aggiorna", "Aggiorna la mappa"),
     #   div(id="legendPlaceholder", style=" margin:0 -10px;"),
@@ -170,11 +176,13 @@ ui <-  dashboardPage(
     
   ),
   dashboardBody ( 
+    
+    chooseSliderSkin("Modern"),
+    setSliderColor(c("DarkSlateGray","DarkSlateGray"), c(1, 2)),
     shinyalert::useShinyalert(force=T), 
     shinyjs::useShinyjs(),
     
-    
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=fvcfd"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=cfcd"),
     tags$head(tags$script(src="myfuncts.js?v=3c")) ,
     # Application title
     #theme = "solar_bootstrap.css",
@@ -199,8 +207,8 @@ ui <-  dashboardPage(
       # fixedPanel(top = 5, left=280,  draggable = T, 
       #               style="z-index:99999; width:250px",
       #               
-      column(12, style="displan:none; position:absolute;z-index:999999999; width:calc( 100vw - 200px ); top:5px; left:90px;", 
-          box( id= "myBox",
+      column(12, style="displan:none; position:absolute;z-index:999999999; width:calc( 100vw - 60px ); top:5px; left:10px;", 
+          box( id= "myBoxAnalytics",
                                    title = HTML(paste0(icon("gears"), " Analytics                ")), 
                                    closable = TRUE,  width = NULL,
                                    collapsed = F,
@@ -211,7 +219,16 @@ ui <-  dashboardPage(
                                    solidHeader = TRUE,
                                    collapsible = TRUE, 
                     #               dygraphOutput("dygraph"),
-                                   plotlyOutput("graph1" )
+                                   fluidRow(
+                                     column(2, switchInput("xPlotAxis", "as Date", size="sm"  ) ),
+                                     column(3,   sliderInput("cloudsInPlot", "CLOUD tolerance:",
+                                               min = 0, max = 100, value = 100)),
+                                     column(3,   sliderInput("snowInPlot", "SNOW tolerance:",
+                                                             min = 0, max = 100, value = 100  )),
+                                     column(4,   pickerInput("datesInPlot", "Dates", multiple=T, 
+                                                             choices=NULL, options = list(liveSearch=T) ))
+                                   ),
+                                  addSpinner(plotlyOutput("graph1" ))
           ) 
       ),
       options = list(
