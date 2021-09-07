@@ -24,7 +24,14 @@ leaflet.object <-
                     options = tileOptions(crs="EPSG:900913", format = "image/jpeg", transparent = FALSE),
                     group="Ortofoto 2015 Regione Veneto",
                     attribution = "© Regione Veneto"
+  )%>%  
+  leaflet::addTiles(urlTemplate  ="//idt2.regione.veneto.it/gwc/service/wmts?&REQUEST=GetTile&contextualWMSLegend=0&crs=EPSG:900913&dpiMode=7&format=image/png&layer=rv:Ortofoto2018_Veneto&styles=&tileMatrixSet=EPSG:900913&TILEMATRIX=EPSG:900913:{z}&TILEROW={y}&TILECOL={x}&url=https://idt2.regione.veneto.it/gwc/service/wmts",
+                          #layers = "rv:OrthoPhoto_2015_pyramid",
+                          options = tileOptions(crs="EPSG:900913", format = "image/jpeg", transparent = FALSE),
+                          group="Ortofoto 2018 Regione Veneto",
+                          attribution = "© Regione Veneto"
   )%>%
+  leaflet::addTiles(urlTemplate  ='', group="Blank")%>%
   leaflet::addPolygons(
     data = as_Spatial(st_zm(tiles.geom))  , 
     color = "#FF0000",
@@ -41,13 +48,15 @@ leaflet.object <-
   ) %>% 
   leaflet::addLayersControl(
     position =("topright"),
-    baseGroups = c("OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto", "BING"),
+    baseGroups = c("Blank", "OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto",  
+                   "Ortofoto 2018 Regione Veneto", "BING"),
     overlayGroups = as.character(c(overlayGroups.WMS.layerIDS, "Sentinel-2 TILES")),
     layersControlOptions(autoZIndex = TRUE, collapsed = F) 
   ) %>% 
   
   hideGroup( as.character(overlayGroups.WMS.layerIDS) )   %>% 
   showGroup( "INDICE" )   %>% 
+  showGroup( "Ortofoto 2018 Regione Veneto" )   %>% 
   
   leaflet.extras::addDrawToolbar(
     targetGroup='draw',
@@ -76,8 +85,8 @@ leaflet.object <-
 
       myMap.on('baselayerchange', baselayerChanged)
     }") %>%
-  leaflet::setView( lng=11.970140, lat=46.349963, zoom = 8)  
-
+  leaflet::setView( lng=11.970140, lat=46, zoom = 8)  %>%
+  leafem::addMouseCoordinates( )
 
 
 ### FUNZIONI --------

@@ -172,8 +172,9 @@ update.Image.LUT <- function(verbose = F) {
   todelete <- setdiff(images.lut$folder, images.lut.tmp$folder )
   if(length(todelete)>0 && length(which(nchar(todelete)>50))==length(todelete)) {
     unlink(todelete, recursive = T)
-  } else{
-    warning("Could not delete directories!")
+  } 
+  if(length(todelete)>0){
+    warning("Could not delete directories! ", todelete)
   }
   images.lut <<- images.lut.tmp
   save(images.lut, file = "images.lut.rda")

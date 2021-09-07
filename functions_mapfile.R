@@ -95,7 +95,7 @@ createIndexFile<-function(session){
     return()
   }
   date<- nT$date[[1]]
-  bands<- (nT$bands[[1]])[[1]]
+  bands<- (nT$bands[[1]])
   folder<-nT$folder[[1]]
   vrt<-file.path(folder, "mapservVRT_20m.vrt")
   if( !file.exists(vrt) ){
@@ -106,21 +106,31 @@ createIndexFile<-function(session){
   
   bands2use<- unique( stringr::str_extract_all(   session$input$indici , "B[018][0-9A]")[[1]] )
   
-  withProgress(message = 'Calcolo Indice', value = 0, {    
+  withProgress(message = 'Calculating index in real time...', value = 0, {    
     bands.raster<-list()
     cc<-1
     for(i in bands2use){
-      setProgress(cc/(length(bands2use)+3), detail = sprintf("Estraggo banda %s...", i) ) 
+      setProgress(cc/(length(bands2use)+3), detail = sprintf("Extracting band %s...", i) ) 
       ii.init<-i
-      ii<-list.files(folder, pattern= sprintf("_%s_20m\\.jp2$", i),  
-                     recursive = T, full.names = T)
+      
+      iitm<-list.files(folder, pattern= sprintf("_20m\\.jp2$", i),  
+                     recursive = T, full.names = F)
+      
       if(length(ii)!=1){
-        if(i=="B08") i<-"B8A"
-        ii<-list.files(folder, pattern= sprintf("_%s_20m\\.jp2$", i),  
+        if(i=="B08") {
+          i<-"B8A"
+          ii<-list.files(folder, pattern= sprintf("_%s_20m\\.jp2$", i),  
                        recursive = T, full.names = T)
+        } else {
+          ii<-list.files(folder, pattern= sprintf("_%s_60m\\.jp2$", i),  
+                         recursive = T, full.names = T)
+        }
       }
-      if(length(ii)!=1){
-        shinyalert("Banda %s in equazione non trovata nella cartella", i)
+      
+ 
+      
+      if(length(ii)!=1){ 
+        shinyalert(sprintf("Band %s in your equation not found anywhere!", i))
         return()
       }
  
@@ -154,7 +164,7 @@ createIndexFile<-function(session){
     r<-eval(parse(text=  mYexpression) )
     masks<-NULL
     if(isTruthy(session$input$mskCld) && session$input$mskCld!=0 ){
-      
+
       outRaster<-sprintf("%s/%s_CLD.tif", pathsTemp, session$token, ii.init)
       gdalUtils::gdalwarp(
         bands$CLD$fpath,

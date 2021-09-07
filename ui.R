@@ -9,15 +9,19 @@ tt <- names(tt)
 names(tt)<- tiles.labels
 
 ui <-  dashboardPage(
-  #skin = "black",
+  #skin = "black",updateBox
   preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#000000"),
-  header = dashboardHeader( title = HTML("<b>InforSAT</b>") ), 
+  header = dashboardHeader( title = HTML("InforSAT"),
+                            leftUi = tagList(
+                              actionBttn("showAnalysisPanel", "Analysis Panel", size="sm", style = "simple" ),
+                              actionBttn("showNotificationPanel", "Logs&Notifications", size="sm", style = "simple" )
+                            ) ), 
   sidebar=dashboardSidebar (
     
     collapsed = FALSE,
     minified = F,
-    sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
-                      label = "Search..."),
+    # sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
+    #                   label = "Search..."),
     selectInput(inputId = 'tile',
                 label = 'Choose tile', 
                 choices = c("", tt) ),
@@ -28,26 +32,26 @@ ui <-  dashboardPage(
                            label = 'Choose Image by list', 
                            choices = NULL ),
               
-               div(title="Blocca ad una scala lineare dell'indice, utile per eseguire confronti", 
-         
                   selectInput(inputId = 'resampling',
                                label = 'Resampling method (GDAL)',
                                choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") 
                    ),
+               
+               div(title="Fix scale so that it does not change depending on min max values. Blocca ad una scala lineare i valori dell'indice, utile per eseguire confronti",
                    materialSwitch( 
                      inputId = "freezeScale",
                      label = "Scala fissa",
                      status = "primary",
                      value=T,
                      right = F, inline = T
-                   ),
-                   materialSwitch( 
-                     inputId = "spyGlass",
-                     label = "SpyGlass",
-                     status = "primary",
-                     right = F, inline = T
-                   )
-                 )
+                   ) 
+                  )#,
+                   # materialSwitch( 
+                   #   inputId = "spyGlass",
+                   #   label = "SpyGlass",
+                   #   status = "primary",
+                   #   right = F, inline = T
+                   # )
             ),
         column(6, 
                actionBttn(inputId = "aggiorna", label = "Aggiorna la mappa", icon=icon("reload"), 
@@ -65,62 +69,19 @@ ui <-  dashboardPage(
         exit = animations$fading_exits$fadeOut,
         duration=0.5
       )
-    ),
-    # box( id= "LayersBox",
-    #      title = HTML(paste0(icon("table"), " Layers                ")), 
-    #      closable = F,  width = NULL,
-    #      collapsed = T,
-    #      enable_label = F, 
-    #      label_text = "",
-    #      #label_status = "danger",
-    #      status = "warning",
-    #      solidHeader = TRUE,
-    #      collapsible = TRUE
-    # ) ,
-    
-    # dropdown(   
-    #   style = "bordered", 
-    #   icon = icon("gears"),
-    #   label = "Zonal Statistics",
-    #   animate = animateOptions(
-    #     enter = animations$fading_entrances$fadeIn,
-    #     exit = animations$fading_exits$fadeOut,
-    #     duration=0.5
-    #   ),
-    #   
-    #   
-    #   pickerInput(
-    #     inputId = "Id083",
-    #     label = "Statistics to calculate",
-    #     choices = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
-    #     selected = c("Average", "Median", "Standard deviation", "25th-75th percentile", "Min-Max"),
-    #     multiple = TRUE
-    #   ),
-    # 
-    # ),
+    ), 
     actionButton("calcola", "Source PLOT") ,
+    
+    div( title="Use parallel computing ",  style="display:inline-block",
+         switchInput("parallel", label = "<i class=\"fa fa-bars fa-rotate-90\"></i>&nbsp;PARALLEL",  labelWidth = "120px"  , value = FALSE) 
+        ),
     div( title="Download vector file with the areas that were drawn in the map as polygons. ", 
        downloadButton("scaricaPoligoni", "Polygons")
        ),
     #downloadButton("scaricaIndice", "Raster Indice"),
     div( title="Download an excel file with all values extracted from pixels inside the areas drawn in the map from all the images at different dates. ", 
          downloadButton("scaricaTabellaValori", "Index Values Table") 
-         )
-    
-    # dropdown(
-    #   actionButton("aggiorna", "Aggiorna la mappa"),
-    #   div(id="legendPlaceholder", style=" margin:0 -10px;"),
-    #   hr(),
-    #   style = "bordered", icon = icon("table"),
-    #    label = "Layers",
-    #   animate = animateOptions(
-    #     enter = animations$fading_entrances$fadeIn,
-    #     exit = animations$fading_exits$fadeOut,
-    #     duration=0.5
-    #   )
-    # )
-    
-   
+         ) 
   ),
   
   controlbar = dashboardControlbar( width = 500,
@@ -147,9 +108,9 @@ ui <-  dashboardPage(
           selected = character(0)
         ),
         
-        div(title="dddd",
+        #div(title="dddd",
             plotlyOutput(outputId = "bandHistogram")
-        ),
+       # ),
         
         
       ),
@@ -182,31 +143,10 @@ ui <-  dashboardPage(
     shinyalert::useShinyalert(force=T), 
     shinyjs::useShinyjs(),
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=cfcd"),
-    tags$head(tags$script(src="myfuncts.js?v=3c")) ,
-    # Application title
-    #theme = "solar_bootstrap.css",
-    # div( title=sprintf(
-    #   "Scegli giorno (%d immagini disponibili)",
-    #   length(images.lut$dates)
-    # ), id="topMostSlider",
-    #   style = "margin:0 0; position:relative; display:inline-block; width:100%;   padding:0px 0px",
-    #   # shinyWidgets::sliderTextInput(
-    #   #   "dayselected",
-    #   #   width = "100%",
-    #   #   NULL,
-    #   #   choices = as.character(images.lut$date),
-    #   #   grid = TRUE
-    #   # )
-    # 
-    # 
-    # ),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=crrsdf"),
+    tags$head(tags$script(src="myfuncts.js?v=3c")) , 
     
-    
-    jqui_draggable( 
-      # fixedPanel(top = 5, left=280,  draggable = T, 
-      #               style="z-index:99999; width:250px",
-      #               
+    jqui_draggable(  
       column(12, style="displan:none; position:absolute;z-index:999999999; width:calc( 100vw - 60px ); top:5px; left:10px;", 
           box( id= "myBoxAnalytics",
                                    title = HTML(paste0(icon("gears"), " Analytics                ")), 
@@ -220,15 +160,17 @@ ui <-  dashboardPage(
                                    collapsible = TRUE, 
                     #               dygraphOutput("dygraph"),
                                    fluidRow(
-                                     column(2, switchInput("xPlotAxis", "as Date", size="sm"  ) ),
+                                     column(2, div(title="Scale X axis as dates or as groups.", switchInput("xPlotAxis", onLabel="Text", offLabel = "Date",   width="100%"  ) ),
+                                               actionBttn("redrawAnalysisPlot", "RePlot", icon=icon("recycle"), 
+                                                          size="sm", style = "simple", color = "primary")),
                                      column(3,   sliderInput("cloudsInPlot", "CLOUD tolerance:",
                                                min = 0, max = 100, value = 100)),
                                      column(3,   sliderInput("snowInPlot", "SNOW tolerance:",
                                                              min = 0, max = 100, value = 100  )),
                                      column(4,   pickerInput("datesInPlot", "Dates", multiple=T, 
-                                                             choices=NULL, options = list(liveSearch=T) ))
+                                                             choices=NULL, options = pickerOptions(liveSearch=T, size=10, selectedTextFormat="count" ) ))
                                    ),
-                                  addSpinner(plotlyOutput("graph1" ))
+                                  addSpinner( plotlyOutput("graph1", width="calc( 100vw - 110px )" ) )
           ) 
       ),
       options = list(

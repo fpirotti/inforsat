@@ -32,16 +32,24 @@
 }
 #shiny-notification-panel{
   width:100% !important;
-  background-color: green; 
+  background-color: #eaeaea55; 
 }
 .leaflet-control-layers{
   font-size: small;
 }
 #mymap { 
-  height:calc(100vh - 100px) !important;
+  height:calc(100vh - 55px) !important;
   overflow: hidden; 
 }
-   
+.lnlt {
+  position:absolute !important;
+  bottom:5px;
+  left:5px; 
+  font-size: 12px;
+}
+.content{ 
+  padding:0 !important; 
+}   
 .leaflet-tile-container img {
     width: 256.8px !important;
     height: 256.8px !important;

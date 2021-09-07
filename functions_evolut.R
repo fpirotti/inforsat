@@ -58,9 +58,14 @@ makeVRT<-function(path, vrtname="mapservVRT_20m.vrt", verbose=F){
 
 compositeCreate<-function(session){ 
   
+  if( !shiny::isTruthy(session$input$dayselected) || !shiny::isTruthy(session$input$tile) ){
+    shinyalert::shinyalert("Warning", "No tile or image date selected for analysis.")
+    return()
+  }
+  
   masking<-processingMasking[ as.integer(session$input$mskCld)+1, as.integer(session$input$mskSnow)+1 ]
   selectedDate <- (session$input$dayselected)
-  print(class(session$input$dayselected))
+  
   if(!file.exists(session$userData$mapfile)){ initMapfile(session) }
   
   mapfile<-readr::read_file(session$userData$mapfile)
@@ -93,7 +98,12 @@ compositeCreate<-function(session){
   histTable<-sapply(BANDS[bandIndex], '[[', "colorHist")
  
  
-  plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", 0:30 )
+  plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", 
+                    list(as.integer(0), as.integer(1), as.integer(2),
+                         as.integer(3), as.integer(4), as.integer(5), 
+                         as.integer(6), as.integer(7), as.integer(8),
+                         as.integer(9), as.integer(10), as.integer(11)) )
+
   
   scale<-c()
   for(i in colnames(histTable) ){
@@ -102,6 +112,7 @@ compositeCreate<-function(session){
     pp<-(qq$density-min(qq$density)) / diff(range(qq$density))
     pp.sum<-sum(pp)
     ttsum<-0
+    
     for(tt in 1:length(pp) ){
       ttsum<-ttsum+ pp[[tt]]
       frac<-ttsum/pp.sum

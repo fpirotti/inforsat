@@ -114,9 +114,9 @@ observeEvent(input$ok_pw, {
     }
     
     title<-"Authentication error"
-    message<-sprintf("Email recognized but wrong password! If you forgot your password click the \"Send password\" button to send again." )
+    message<-sprintf("Email recognized but <b>WRONG PASSWORD</B>! If you forgot your password click the \"Send password\" button to send again." )
   }
-  showAlert(title, message)
+  showAlert(title, message )
  
   })
 

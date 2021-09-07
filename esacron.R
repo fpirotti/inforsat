@@ -15,7 +15,7 @@ imagelist <-
 existing <- tools::file_path_sans_ext(basename(imagelist))
 CC<-0
 
-getImage <- function(page=1, daysback=300, url=NA){
+getImage <- function(page=1, daysback=800, url=NA){
   if(is.na(url)) {
     query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((11.5 45.5, 12 45.5, 12 46,11.5 46,11.5 45.5)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 5] AND producttype:S2MSI2A   )", daysback )
 
@@ -35,18 +35,21 @@ getImage <- function(page=1, daysback=300, url=NA){
   remaining <- setdiff(1:nres, dups)
   
   for(i in  remaining ) {
-    res.list$feed$entry$
+     
     name <- res.list$feed$entry$title[[i]]  
+
     lnk2download <- res.list$feed$entry$link[[i]] %>% filter(is.na(rel))
     lnk <- res.list$feed$entry$link[[i]] %>% filter(rel=="alternative")
     
     getinfo <- getURL(lnk$href, userpwd="fpirotti:libero", httpauth = 1L) 
     
     if(grepl("<d:Online>false</d:Online>", getinfo)){
-      message("\nData not online, skipping\n")
+ 
+      message("\nData ", name, " not online, skipping\n")
+ 
       next
     } 
-    
+ 
   
     outfile <- file.path(image.folder, paste0(name,".zip") )
     
@@ -93,7 +96,7 @@ getImage <- function(page=1, daysback=300, url=NA){
    )
     
     if(file.exists(outfile))  {
-      message("\nExtracting  ", outfolder, " .... ") 
+      message("\nExtracting  ", outfile, " in ", image.folder) 
       if(file.size(outfile)<100){ 
         message("\n 0 size, skipping and removing ", outfolder, " .... ") 
         Sys.sleep(3)
@@ -119,4 +122,4 @@ getImage()
 
 
 
-#update.Image.LUT(T)
+update.Image.LUT(T)
