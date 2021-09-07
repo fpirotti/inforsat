@@ -37,6 +37,7 @@ server <- function(input, output, session) {
  
   
   output$bandHistogram <- renderPlotly({
+    browser()
     plot_ly(type = "scatter", mode = "markers", source="bandHistogram") %>% layout(
       hoverlabel = list(align = "left"),
       margin = list(
@@ -170,8 +171,10 @@ server <- function(input, output, session) {
     input$composite
     input$dayselected
     input$freezeScale
-    input$indici }, {
-        
+    input$resampling
+    input$indici_formula }, {
+      
+      req(input$dayselected)
       session$userData$wms.url<- compositeCreate(session)
       
       #createIndexFile(session)
@@ -179,8 +182,14 @@ server <- function(input, output, session) {
       createIndexFile(session)
     }, ignoreInit = T )
   
+  ### CAMBIO INDICE ----
+  observeEvent(input$indici, {
+      
+    updateTextInput(inputId = "indici_formula", value = input$indici )
+       
+    } )
   
-
+  
   
   observeEvent(input$info ,{
     shinyalert::shinyalert(
@@ -304,8 +313,11 @@ server <- function(input, output, session) {
       data.c<- list()
       if(input$parallel){
         activeLUT.Table <- isolate(reacts$activeLUT.Table)
-        setProgress(0.5, message = "Parallel computation with 4 cores... no progress will be shown in this case.", detail = sprintf("N. of Images: %s...",  nimages) )  
-        cl <- parallel::makeForkCluster(4)
+        setProgress(0.5, 
+                    message = sprintf("Parallel computation with %d cores... no progress will be shown in this case.", 
+                                      isolate(input$nCores) ), 
+                    detail = sprintf("N. of Images: %s...",  nimages) )  
+        cl <- parallel::makeForkCluster( isolate(input$nCores) )
         doParallel::registerDoParallel(cl)
         myPolygons.tmp <- myPolygons
         
@@ -323,9 +335,9 @@ server <- function(input, output, session) {
           rr
         }
         
+        parallel::stopCluster(cl) 
         names(data.c)<- as.character(reacts$activeLUT.Table$date)
         
-        parallel::stopCluster(cl) 
       } else {
         
         for(i in 1:nimages){

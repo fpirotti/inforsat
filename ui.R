@@ -13,6 +13,18 @@ ui <-  dashboardPage(
   preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#000000"),
   header = dashboardHeader( title = HTML("InforSAT"),
                             leftUi = tagList(
+                              dropdown(  
+                                div(id="legendPlaceholder", style=" margin:0 -10px;") ,
+                                 
+                                style = "simple", 
+                                icon = icon("table"),  size = "sm",
+                                width = "225px",  label = "Layers",
+                                animate = animateOptions(
+                                  enter = animations$fading_entrances$fadeIn,
+                                  exit = animations$fading_exits$fadeOut,
+                                  duration=0.5
+                                )
+                              ), 
                               actionBttn("showAnalysisPanel", "Analysis Panel", size="sm", style = "simple" ),
                               actionBttn("showNotificationPanel", "Logs&Notifications", size="sm", style = "simple" )
                             ) ), 
@@ -25,56 +37,36 @@ ui <-  dashboardPage(
     selectInput(inputId = 'tile',
                 label = 'Choose tile', 
                 choices = c("", tt) ),
-    dropdown( 
-      fluidRow(
-        column(6,   
-               selectInput(inputId = 'dayselected',
-                           label = 'Choose Image by list', 
-                           choices = NULL ),
-              
-                  selectInput(inputId = 'resampling',
-                               label = 'Resampling method (GDAL)',
-                               choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") 
-                   ),
-               
-               div(title="Fix scale so that it does not change depending on min max values. Blocca ad una scala lineare i valori dell'indice, utile per eseguire confronti",
-                   materialSwitch( 
-                     inputId = "freezeScale",
-                     label = "Scala fissa",
-                     status = "primary",
-                     value=T,
-                     right = F, inline = T
-                   ) 
-                  )#,
-                   # materialSwitch( 
-                   #   inputId = "spyGlass",
-                   #   label = "SpyGlass",
-                   #   status = "primary",
-                   #   right = F, inline = T
-                   # )
-            ),
-        column(6, 
-               actionBttn(inputId = "aggiorna", label = "Aggiorna la mappa", icon=icon("reload"), 
-                          style="simple", color = "primary", size="sm"),
-               div(id="legendPlaceholder", style=" margin:0 -10px;") 
-                
-               )
-      ),   
-      style = "bordered", 
-      icon = icon("table"),
-      width = "650px", 
-      label = "Layers",
-      animate = animateOptions(
-        enter = animations$fading_entrances$fadeIn,
-        exit = animations$fading_exits$fadeOut,
-        duration=0.5
-      )
-    ), 
-    actionButton("calcola", "Source PLOT") ,
+    selectInput(inputId = 'dayselected',
+                label = 'Choose Image Date', 
+                choices = NULL ),
     
-    div( title="Use parallel computing ",  style="display:inline-block",
-         switchInput("parallel", label = "<i class=\"fa fa-bars fa-rotate-90\"></i>&nbsp;PARALLEL",  labelWidth = "120px"  , value = FALSE) 
-        ),
+    selectInput(inputId = 'resampling',
+                label = 'Resampling method (GDAL)',
+                choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") 
+    ),
+    
+    div(title="Fix scale so that it does not change depending on min max values. Blocca ad una scala lineare i valori dell'indice, utile per eseguire confronti",
+        switchInput( 
+          inputId = "freezeScale", offStatus="success",
+          label = "Color&nbsp;Scale",
+          offLabel = "Fixed",
+          onLabel = "Auto", 
+          value=T  , handleWidth=230
+        ) 
+    ),
+    
+    actionBttn(inputId = "aggiorna", label = "Redraw", icon=icon("recycle"), 
+               style="simple", color = "primary", size="sm"),
+    actionButton("calcola", "Process areas for PLOT") ,
+    fluidRow( style="border:1px dotted white; margin:1px;", title="Use parallel computing ",
+      column(6, 
+             div(   style="display:inline-block",
+                  switchInput("parallel", label = "<i class=\"fa fa-bars fa-rotate-90\"></i>", onLabel = "Yes", offLabel = "No",   value = FALSE) 
+                  ) 
+             ),
+      div( title="Number of Cores (max 12)",  column(6,  numericInput("nCores", NULL, 4, 1, 12, 1) ) )
+    ), 
     div( title="Download vector file with the areas that were drawn in the map as polygons. ", 
        downloadButton("scaricaPoligoni", "Polygons")
        ),
@@ -91,11 +83,13 @@ ui <-  dashboardPage(
         "Indici",
         selectizeInput(
           "indici",
+          width = "100%",
           label = "Indici",
           choices = radio2expression,
           selected = character(0)
-        ) 
-        
+        ) , 
+        div( textInput("indici_formula", label = "Formula", placeholder = "custom index", ) , title="You can define your index here NOT YET ACTIVE!!"),
+        div("Please use the following band names when creating your formula: B01,B02,...,B8A,...B12")
 
       ),
       
@@ -143,7 +137,7 @@ ui <-  dashboardPage(
     shinyalert::useShinyalert(force=T), 
     shinyjs::useShinyjs(),
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=crrsdf"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=c00df"),
     tags$head(tags$script(src="myfuncts.js?v=3c")) , 
     
     jqui_draggable(  

@@ -55,9 +55,9 @@ leaflet.object <-
   ) %>% 
   
   hideGroup( as.character(overlayGroups.WMS.layerIDS) )   %>% 
-  showGroup( "INDICE" )   %>% 
   showGroup( "Ortofoto 2018 Regione Veneto" )   %>% 
   
+  showGroup( "INDICE" )   %>% 
   leaflet.extras::addDrawToolbar(
     targetGroup='draw',
     editOptions = editToolbarOptions(selectedPathOptions = selectedPathOptions()),
@@ -81,9 +81,9 @@ leaflet.object <-
   htmlwidgets::onRender("
     function(el, x) {
       myMap = this;
-      Shiny.setInputValue('leafletRendered',true, {priority: \"event\"}); 
-
+      Shiny.setInputValue('leafletRendered',true, {priority: \"event\"});  
       myMap.on('baselayerchange', baselayerChanged)
+      myMap.on('layerchange', baselayerChanged)
     }") %>%
   leaflet::setView( lng=11.970140, lat=46, zoom = 8)  %>%
   leafem::addMouseCoordinates( )

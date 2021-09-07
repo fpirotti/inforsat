@@ -113,7 +113,7 @@ createIndexFile<-function(session){
       setProgress(cc/(length(bands2use)+3), detail = sprintf("Extracting band %s...", i) ) 
       ii.init<-i
       
-      iitm<-list.files(folder, pattern= sprintf("_20m\\.jp2$", i),  
+      ii<-list.files(folder, pattern= sprintf("_20m\\.jp2$", i),  
                      recursive = T, full.names = F)
       
       if(length(ii)!=1){
@@ -150,17 +150,21 @@ createIndexFile<-function(session){
         tr = c(res,res),
         overwrite = T
       )
-  
+       
       bands.raster[[ii.init]] <- terra::rast(outRaster)
     }
     
+     
+     
     
-    shinyjs::runjs( sprintf(' $("#infolog").append("<P>Risoluzione %d");', as.integer(res) ) )
+    shinyjs::runjs( sprintf(' $("#infolog").append("<P>Resolution %d");', as.integer(res) ) )
     
-    setProgress((cc+1)/(length(bands2use)+3), detail = sprintf("Calcolo %s", session$input$indici) )
+    setProgress((cc+1)/(length(bands2use)+3), detail = sprintf("Processing %s", session$input$indici) )
     
     mYexpression<-gsub("(B[018][0-9A])",   "  bands.raster[['\\1']]  " ,    
                        session$input$indici) 
+    
+ 
     r<-eval(parse(text=  mYexpression) )
     masks<-NULL
     if(isTruthy(session$input$mskCld) && session$input$mskCld!=0 ){
@@ -194,8 +198,7 @@ createIndexFile<-function(session){
     }
     
   setProgress((cc+2)/(length(bands2use)+3), detail = sprintf("Scrivo...") )
-  terra::writeRaster(r, session$userData$indexfile, datatype="FLT4S", overwrite = T )
-  
+  terra::writeRaster(r, session$userData$indexfile, datatype="FLT4S", overwrite = T ) 
   if(session$input$freezeScale){
     
     fixedScale4index(session,r)
