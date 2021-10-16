@@ -9,12 +9,14 @@ image.folder <- "/archivio/esa/s2"
 bands2use <-
   c(
     "AOT" ,
+  #  "B01" ,
     "B02",
     "B03" ,
     "B04",
     "B05" ,
     "B06",
     "B07" ,
+  #  "B09" ,
     "B11",
     "B12" ,
     "B8A",
@@ -91,12 +93,12 @@ update.Image.LUT <- function(verbose = F) {
     folder <- x
     folder.name <- tools::file_path_sans_ext(basename(x))
     x <- strsplit(folder.name, split = "_")[[1]]
-    
+
     if (is.element(folder, images.lut$folder) ) {
       if(verbose) message( sprintf("\n%s esiste!! .... skipping ...\n", folder.name))
       return(NULL)
-    } 
-    
+    }
+
     
     if(verbose) message( sprintf("\n ---Faccio %s--\n", folder.name))
     ww <- which(nchar(x) == 15)
@@ -118,35 +120,7 @@ update.Image.LUT <- function(verbose = F) {
     
     size <- as.integer(strsplit(split = "\t", system(sprintf('du -ms %s', folder), intern = T))[[1]][[1]] )
     
- 
-    
-    # ints <- is.element(lubridate::round_date(data, "day"), lubridate::round_date(c(as.POSIXct(dates), images.lut$date), "day") ) &&  
-    #                   is.element( tile, c(tiles, levels(images.lut$tile ) ) )
-    # 
-    # if( ints ){
-    #   browser()
-    #   cc<-0 
-    #   finalizeData()
-    #   initData() 
-    #   ## duplicated! we keep the old one only if the size is larger in the older one 
-    #   message(sprintf("\n------Duplicated %s %s-----\n", tile, data) )
-    #   if(size < folder.sizes[[ints]]) {
-    #     return(NULL)
-    #   } else {  
-    #     browser()
-    #       VRTs    <- VRTs[-ints]   
-    #       tiles   <- tiles[-ints]   
-    #       dates   <- dates[-ints]   
-    #       folders <- folders[-ints] 
-    #       folder.sizes <- folder.sizes[-ints] 
-    #       if( is.null( bandslist[[ folders[[ints]]  ]] ) ){
-    #         message(sprintf("\n PROBLEM ------Duplicated AND CANNOT FIND BANDLIST %s %s-----\n", tile, data) )
-    #         stop("Problem did not find the bandlist! breaking")
-    #         return(NULL)
-    #       }
-    #       bandslist[[ folders[[ints]]  ]] <- NULL
-    #   } 
-    # }
+   
  
     vrt<- file.path(folder, "mapservVRT_20m.vrt")
     bandslist[[folder]]  <- makeVRT(folder, verbose = verbose)

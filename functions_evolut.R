@@ -43,7 +43,9 @@ get20mBandInfo<-function(bandsPath, verbose=F){
 makeVRT<-function(path, vrtname="mapservVRT_20m.vrt", verbose=F){
   
   rasters.start<-list.files(path, ".*_20m\\.jp2$", recursive=T, full.names = T)
- 
+  #rasters.start.60<-list.files(path, ".*B01_60m\\.jp2$|.*B09_60m\\.jp2$", recursive=T, full.names = T)
+  #rasters.start <- c(rasters.start, rasters.start.)
+  #browser()
   bands.list.with.path <- get20mBandInfo(rasters.start, verbose) 
   
   vrt<-file.path(path, vrtname)

@@ -89,7 +89,7 @@ ui <-  dashboardPage(
           selected = character(0)
         ) , 
         div( textInput("indici_formula", label = "Formula", placeholder = "custom index", ) , title="You can define your index here NOT YET ACTIVE!!"),
-        div("Please use the following band names when creating your formula: B01,B02,...,B8A,...B12")
+        div("Please use the following band names when creating your formula: B01,B02,...,B8A,...B12. NOT B09 and B01, these are not yet implemented")
 
       ),
       
@@ -154,14 +154,15 @@ ui <-  dashboardPage(
                                    collapsible = TRUE, 
                     #               dygraphOutput("dygraph"),
                                    fluidRow(
-                                     column(2, div(title="Scale X axis as dates or as groups.", switchInput("xPlotAxis", onLabel="Text", offLabel = "Date",   width="100%"  ) ),
-                                               actionBttn("redrawAnalysisPlot", "RePlot", icon=icon("recycle"), 
+                                     column(3, div(title="Scale X axis as dates or as groups.", switchInput("xPlotAxis", onLabel="Text", offLabel = "Date",   width="100%"  ) ),
+                                            selectInput("plotType", NULL, c("Boxplot+Mean/SD", "Line (mean)+SD"), "Line (mean)"),   
+                                            actionBttn("redrawAnalysisPlot", "RePlot", icon=icon("recycle"), 
                                                           size="sm", style = "simple", color = "primary")),
                                      column(3,   sliderInput("cloudsInPlot", "CLOUD tolerance:",
                                                min = 0, max = 100, value = 100)),
                                      column(3,   sliderInput("snowInPlot", "SNOW tolerance:",
                                                              min = 0, max = 100, value = 100  )),
-                                     column(4,   pickerInput("datesInPlot", "Dates", multiple=T, 
+                                     column(3,   pickerInput("datesInPlot", "Dates", multiple=T, 
                                                              choices=NULL, options = pickerOptions(liveSearch=T, size=10, selectedTextFormat="count" ) ))
                                    ),
                                   addSpinner( plotlyOutput("graph1", width="calc( 100vw - 110px )" ) )

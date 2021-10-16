@@ -37,7 +37,7 @@ server <- function(input, output, session) {
  
   
   output$bandHistogram <- renderPlotly({
-    browser()
+ 
     plot_ly(type = "scatter", mode = "markers", source="bandHistogram") %>% layout(
       hoverlabel = list(align = "left"),
       margin = list(
@@ -65,7 +65,7 @@ server <- function(input, output, session) {
         color = "black",
         size = 9
       )
-    ) %>% event_register('plotly_selected')
+    ) #%>% event_register('plotly_selected')
     
   })
   
@@ -73,9 +73,11 @@ server <- function(input, output, session) {
   session$userData$mapfile   <- file.path(pathsTemp, sprintf("%s.map", session$token))
   myPolygons <- NULL
   myPolygons.tot.area <- NULL
+  
   ### create polygons -----
    observeEvent({
      input$mymap_draw_all_features
+     
      input$mymap_draw_stop },  {
        
        myPolygons <<-  geojson_sf(jsonify::to_json(input$mymap_draw_all_features, unbox = T)) 
@@ -116,12 +118,40 @@ server <- function(input, output, session) {
       filter(CLD <= input$cloudsInPlot, SNW <= input$snowInPlot, as.character(Date) %in% input$datesInPlot )  
  
  
-    xaxis <- as.Date(tb$Date)
-    if(input$xPlotAxis)  xaxis <- as.character(tb$Date)
+    tb$Date <- as.Date(tb$Date)
+    if(input$xPlotAxis)  tb$Date <- as.character(tb$Date)
   
-    fig <- plot_ly(tb, x = xaxis, y = ~Index, color = ~FID, type = "box", boxpoints = FALSE, boxmean="sd") %>% 
-            layout(boxmode = "group")
+    tb.sum <- tb %>% group_by(Date, FID) %>% summarise(n=n(), avgCloud=round(mean(CLD),0),  
+                                                  avgSNOW=round(mean(SNW),0),  
+                                                  avgIndex=round(mean(Index),3), 
+                                                  sdIndex=round(mean(Index),3), 
+                                                  mdIndex=round(median(Index),3), 
+                                                  q25Index=round(quantile(Index, c(0.25)),3), 
+                                                  q75Index=round(median(Index, c(0.75)) ),3)
+    
+    if(input$xPlotAxis)  tb.sum$Date <- as.character(tb.sum$Date)
 
+    if(input$plotType=="Line (mean)"){
+      fig <- plot_ly(as.data.frame(tb.sum), x = ~Date, y = ~avgIndex, color = ~FID,   type = 'scatter', 
+                     mode = 'lines+markers' ) 
+    } else if(input$plotType=="Line (mean)+SD"){
+      fig <- plot_ly(as.data.frame(tb.sum), x = ~Date, 
+                     position = "dodge", y = ~avgIndex, 
+                     color = ~FID, type = 'scatter', 
+                     mode = 'lines+markers' , 
+                     error_y = ~list(array = sdIndex,
+                                      color = '#00000055') ) 
+    } else {
+      fig <- plot_ly(tb, x = ~Date, y = ~Index, color = ~FID, type = "box", 
+                     boxpoints = FALSE,  
+                     boxmean="sd") %>% 
+        layout(boxmode = "group")
+    }
+
+
+    
+
+    
     output$graph1 <- renderPlotly(fig)
  
       
@@ -311,8 +341,9 @@ server <- function(input, output, session) {
       nimages <- nrow(reacts$activeLUT.Table)
       bands2use <- c("CLD","SNW",  bands2use<- unique( stringr::str_extract_all(   session$input$indici , "B[018][0-9A]")[[1]] ) )
       data.c<- list()
+      activeLUT.Table <- isolate(reacts$activeLUT.Table)
+      
       if(input$parallel){
-        activeLUT.Table <- isolate(reacts$activeLUT.Table)
         setProgress(0.5, 
                     message = sprintf("Parallel computation with %d cores... no progress will be shown in this case.", 
                                       isolate(input$nCores) ), 
@@ -336,15 +367,16 @@ server <- function(input, output, session) {
         }
         
         parallel::stopCluster(cl) 
-        names(data.c)<- as.character(reacts$activeLUT.Table$date)
+        names(data.c)<- as.character(activeLUT.Table$date)
         
       } else {
         
         for(i in 1:nimages){
           setProgress(i/(nimages+3), detail = sprintf("Image %s of %s...", i, nimages) )  
-          tt <-terra::rast( reacts$activeLUT.Table$VRT[[i]])
-          bands <- names(reacts$activeLUT.Table$bands[[i]])
+          tt <-terra::rast( activeLUT.Table$VRT[[i]])
+          bands <- names(activeLUT.Table$bands[[i]])
           ww<-match( bands2use, bands  )
+
           if(is.na(sum(ww))){
             warning("\nImage ", activeLUT.Table$VRT[[i]], " does not have the necessary bands to extract... please check. Skipping this image")
             return(NULL)
@@ -352,7 +384,7 @@ server <- function(input, output, session) {
           tt2 <- tt[[ww]]
           rr <-  terra::extract(tt2, terra::vect( st_transform(myPolygons, 32632) ))
           names(rr) <- c("FID", bands2use)
-          data.c[[as.character(reacts$activeLUT.Table$date[[i]])]]<-rr
+          data.c[[as.character(activeLUT.Table$date[[i]])]]<-rr
         }         
       }
  
@@ -385,6 +417,8 @@ server <- function(input, output, session) {
       
     }
     tb<-na.omit(tb) 
+    print(myPolygons)
+    browser()
     if(nrow(tb)<1){
       
       shinyjs::disable(selector = "#scaricaTabellaValori")

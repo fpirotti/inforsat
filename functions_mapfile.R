@@ -61,7 +61,8 @@ createColorScale4index <- function(session, qq, qq.color){
 
 fixedScale4index<-function(session, r, index="NDVI"){
   qq <- c(-1, seq(0,1, by=0.1) )
-  qq.color<-c('#0000FF', '#c7eae5', '#a50026','#d73027','#f46d43','#fdae61','#fee08b','#d9ef8b','#a6d96a','#66bd63','#1a9850','#006837')
+  qq<-c(qq, 2.0)
+  qq.color<-c('#0000FF', '#c7eae5', '#a50026','#d73027','#f46d43','#fdae61','#fee08b','#d9ef8b','#a6d96a','#66bd63','#1a9850','#006837', '#333333')
   createColorScale4index(session, qq, qq.color)
   
 }

@@ -19,9 +19,12 @@ library(waiter)
 library(circlize)
 library(crosstalk)
 
-radio2expression<- list( "ARVI2 - Atmospherically Resistant Vegetation Index 2" = "-0.18+1.17*(B09-B05)/(B09+B05)", "BWDRVI - Blue-wide dynamic range vegetation index" = "(0.1*B09-B01)/(0.1*B09+B01)", 
-                         "EVI - Enhanced Vegetation Index " = "2.4*(B09-B05)/(B09+6*B05+1)", "GVMI - Global Vegetation Moisture Index" = "(B09+0.1-B12+0.02)/(B09+0.1+B12+0.02)",   
-                         "NDMI - Normalized Difference Moisture Index" = "(B08-B11)/(B08+B11)", "NDVI - Normalized Difference Vegetation Index" = "(B08-B04)/(B08+B04)", 
+radio2expression<- list( "ARVI2 - Atmospherically Resistant Vegetation Index 2" = "-0.18+1.17*(B08-B05)/(B08+B05)", 
+                         "BWDRVI - Blue-wide dynamic range vegetation index" = "(0.1*B08-B01)/(0.1*B08+B01)", 
+                         "EVI - Enhanced Vegetation Index " = "2.4*(B08-B05)/(B08+6*B05+1)", 
+                         "GVMI - Global Vegetation Moisture Index" = "(B08+0.1-B12+0.02)/(B08+0.1+B12+0.02)",   
+                         "NDMI - Normalized Difference Moisture Index" = "(B08-B11)/(B08+B11)", 
+                         "NDVI - Normalized Difference Vegetation Index" = "(B08-B04)/(B08+B04)", 
                          "RGI - Red Green Index" = "B04/B03")
 
 

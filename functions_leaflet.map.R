@@ -65,7 +65,7 @@ leaflet.object <-
                                         shapeOptions = drawShapeOptions(), repeatMode = FALSE),
     circleMarkerOptions = FALSE,
     markerOptions  = FALSE,
-    circleOptions = FALSE,
+    circleOptions = FALSE , #drawCircleOptions(showRadius=T),
     singleFeature = FALSE) %>%
   
   # leaflet.extras::addStyleEditor(position = "topleft", 

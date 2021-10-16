@@ -19,7 +19,7 @@ getImage <- function(page=1, daysback=800, url=NA){
   if(is.na(url)) {
     query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((11.5 45.5, 12 45.5, 12 46,11.5 46,11.5 45.5)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 5] AND producttype:S2MSI2A   )", daysback )
     
-    query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((10.5 46.2, 11 46.2, 11 46.7,11 46.7, 10.5 46.2)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 5] AND producttype:S2MSI2A   )", daysback )
+    query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((10.5 46.2, 11 46.2, 11 46.7,11 46.7, 10.5 46.2)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 10] AND producttype:S2MSI2A   )", daysback )
     
   }  else {
     query <- url 
@@ -44,10 +44,12 @@ getImage <- function(page=1, daysback=800, url=NA){
     lnk <- res.list$feed$entry$link[[i]] %>% filter(rel=="alternative")
     
     getinfo <- getURL(lnk$href, userpwd="fpirotti:libero", httpauth = 1L) 
-    
-    if(grepl("<d:Online>false</d:Online>", getinfo)){
+    rxml <- xml2::as_list(xml2::read_xml(getinfo))
+    rxml$entry$properties$ChildrenNumber[[1]]
+    tile <- strsplit(x =  rxml$entry$properties$Name[[1]], split="_")[[1]][[6]]
+    if(rxml$entry$properties$Online[[1]]=="false"){
  
-      message("\nData ", name, " not online, skipping\n")
+      message("\nData ", rxml$entry$properties$CreationDate[[1]] ,"\t", tile, "\t not online, skipping\n")
  
       next
     } 
@@ -82,7 +84,7 @@ getImage <- function(page=1, daysback=800, url=NA){
     
 
     
-    message("\nDOWNLOADING ", lnk2download$href)
+   message("\nDOWNLOADING ", rxml$entry$properties$CreationDate[[1]] ,"\t", tile)
      
    tryCatch( {
      GET(lnk2download$href, 
@@ -124,4 +126,4 @@ getImage()
 
 
 
-update.Image.LUT(T)
+# update.Image.LUT(T)
