@@ -26,7 +26,7 @@
     text-align: right !important;
     background-blend-mode: multiply;
 }
-#scaricaPoligoni, #scaricaIndice, #scaricaTabellaValori {
+#scaricaPoligoni, #scaricaIndice, #scaricaTabellaValori, #scaricaImmagini {
     margin: 5px 15px;
     color: black;
 }
@@ -39,7 +39,12 @@
 }
 #mymap { 
   height:calc(100vh - 55px) !important;
+  width:100%;
   overflow: hidden; 
+}
+.leaflet-layer{ 
+  height:calc(100vh - 55px) !important;
+  width:100%; 
 }
 .lnlt {
   position:absolute !important;

@@ -15,9 +15,9 @@ imagelist <-
 existing <- tools::file_path_sans_ext(basename(imagelist))
 CC<-0
 
-getImage <- function(page=1, daysback=800, url=NA){
+getImage <- function(page=1, daysback=600, url=NA){
   if(is.na(url)) {
-    query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((11.5 45.5, 12 45.5, 12 46,11.5 46,11.5 45.5)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 5] AND producttype:S2MSI2A   )", daysback )
+    # query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((11.5 45.5, 12 45.5, 12 46,11.5 46,11.5 45.5)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 5] AND producttype:S2MSI2A   )", daysback )
     
     query <- sprintf("https://scihub.copernicus.eu/dhus/search?format=json&q=(platformname:Sentinel-2 AND footprint:\"Intersects(POLYGON((10.5 46.2, 11 46.2, 11 46.7,11 46.7, 10.5 46.2)))\" AND ingestiondate:[NOW-%dDAYS TO NOW] AND cloudcoverpercentage:[0 TO 10] AND producttype:S2MSI2A   )", daysback )
     
@@ -102,7 +102,7 @@ getImage <- function(page=1, daysback=800, url=NA){
     if(file.exists(outfile))  {
       message("\nExtracting  ", outfile, " in ", image.folder) 
       if(file.size(outfile)<100){ 
-        message("\n 0 size, skipping and removing ", outfolder, " .... ") 
+        message("\n 0 size, skipping and removing ", outfile, " .... ") 
         Sys.sleep(3)
         file.remove(outfile) 
         next

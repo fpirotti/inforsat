@@ -47,6 +47,52 @@ var changeLayerOpacity = function(e) {
   }
 };
 
+
+function saveAs(uri, filename) {
+
+    var link = document.createElement('a');
+
+    if (typeof link.download === 'string') {
+
+        link.href = uri;
+        link.download = filename;
+
+        //Firefox requires the link to be in the body
+        document.body.appendChild(link);
+
+        //simulate click
+        link.click();
+
+        //remove the link when done
+        document.body.removeChild(link);
+
+    } else {
+
+        window.open(uri);
+
+    }
+}
+
+
+
+
+
+// ricordati di includere html2canvas
+
+function getPNGs(prefix){
+  
+      var childs = $("#mymap").children().first().children().first().children();
+      for(var i=0; i < childs.length; i++ ){ 
+        if(i==0) continue;
+        html2canvas( childs[i],
+        {  width:  $("#mymap").width(),
+           height: $("#mymap").height() }).then(function(canvas) {
+           saveAs(canvas.toDataURL(), prefix+".png"); 
+        });
+      }
+}
+
+
 $(window).on('load', function() { 
   
 

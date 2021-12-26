@@ -26,7 +26,28 @@ ui <-  dashboardPage(
                                 )
                               ), 
                               actionBttn("showAnalysisPanel", "Analysis Panel", size="sm", style = "simple" ),
-                              actionBttn("showNotificationPanel", "Logs&Notifications", size="sm", style = "simple" )
+                              actionBttn("showNotificationPanel", "Logs&Notifications", size="sm", style = "simple" ),
+                              
+                              
+                              dropdownButton(
+                                circle = F, status = "primary",
+                                icon = icon("download"), width = "300px",
+                                
+                                tooltip = tooltipOptions(title = "Click to see download options"),
+                                div( title="Download vector file with the areas that were drawn in the map as polygons. ", 
+                                     downloadButton("scaricaPoligoni", "Polygons")
+                                ),
+                                div( title="Download raster of index ", 
+                                     downloadButton("scaricaIndice", "Index Raster")
+                                ),
+                                div( title="Downloads all overlays (composite, index, cloud cover...) in PNG format ", 
+                                     actionButton("scaricaImmagini", "Canvas images")
+                                ), 
+                                div( title="Download an excel file with all values extracted from pixels inside the areas drawn in the map from all the images at different dates. ", 
+                                     downloadButton("scaricaTabellaValori", "Index Values Table") 
+                                )
+                              )
+                              
                             ) ), 
   sidebar=dashboardSidebar (
     
@@ -66,14 +87,8 @@ ui <-  dashboardPage(
                   ) 
              ),
       div( title="Number of Cores (max 12)",  column(6,  numericInput("nCores", NULL, 4, 1, 12, 1) ) )
-    ), 
-    div( title="Download vector file with the areas that were drawn in the map as polygons. ", 
-       downloadButton("scaricaPoligoni", "Polygons")
-       ),
-    #downloadButton("scaricaIndice", "Raster Indice"),
-    div( title="Download an excel file with all values extracted from pixels inside the areas drawn in the map from all the images at different dates. ", 
-         downloadButton("scaricaTabellaValori", "Index Values Table") 
-         ) 
+    )
+   
   ),
   
   controlbar = dashboardControlbar( width = 500,
@@ -137,8 +152,10 @@ ui <-  dashboardPage(
     shinyalert::useShinyalert(force=T), 
     shinyjs::useShinyjs(),
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=c00df"),
-    tags$head(tags$script(src="myfuncts.js?v=3c")) , 
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=sdfgsdfsd"),
+    tags$head(tags$script(src="myfuncts.js?v=3qwdf")) , 
+    tags$head(tags$script(src="html2canvas.min.js")) , 
+    
     
     jqui_draggable(  
       column(12, style="displan:none; position:absolute;z-index:999999999; width:calc( 100vw - 60px ); top:5px; left:10px;", 

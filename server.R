@@ -1,7 +1,6 @@
 # Define server logic required to draw a histogram 
 server <- function(input, output, session) { 
   #source("functions_auth.R", local=T)
-  #shinyjs::hide("scaricaIndice")
   #shinyjs::hide("scaricaPoligoni")
   shinyjs::addCssClass(id="scaricaIndice", "sideButtons")
   shinyjs::disable(selector = "#scaricaIndice")
@@ -210,6 +209,7 @@ server <- function(input, output, session) {
       #createIndexFile(session)
       updateMap(session)
       createIndexFile(session)
+      shinyjs::enable("scaricaIndice")
     }, ignoreInit = T )
   
   ### CAMBIO INDICE ----
@@ -287,12 +287,17 @@ server <- function(input, output, session) {
       writexl::write_xlsx(  reacts$table.index, file )
     }
   )
+  ### SCARICA PNG -----
+  observeEvent(input$scaricaImmagini, {
+    shinyjs::runjs( sprintf("getPNGs('%s');", session$token) )
+    print("===========")
+  })
   ### SCARICA RASTER -----
   output$scaricaIndice <- downloadHandler(
     filename = function() { 
       sprintf("%s.tif", session$token)
     },
-    content = function(file) { 
+        content = function(file) { 
       file.copy(session$userData$indexfile, file, overwrite = T)
     }
   )
@@ -435,7 +440,6 @@ server <- function(input, output, session) {
     
     
     shinyjs::enable(selector = "#scaricaPoligoni")
-    #shinyjs::show("scaricaIndice")
     shinyjs::enable(selector = "#scaricaTabellaValori")
       
   })

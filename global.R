@@ -158,3 +158,4 @@ update.Image.LUT <- function(verbose = F) {
 
 
 source("functions_leaflet.map.R")
+
