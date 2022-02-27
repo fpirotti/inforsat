@@ -3,15 +3,16 @@
 
 get20mBandInfo<-function(bandsPath, verbose=F){
   rasters.start<-bandsPath
-  
+ 
   bands<- (lapply(bands2use, function(x){ 
       idx=grep(x, rasters.start) 
       if(!(length(idx)==1)){
         #stop("No band found")
         stop("problem in band ", x)
       }
+      
       r<- terra::rast(rasters.start[[ idx[[1]] ]])
-      ss<-as.numeric( terra::spatSample(r, 1000000, na.rm=T) )
+      ss<-as.numeric( terra::spatSample(r, 10000, na.rm=T)[[1]] )
       
       colorQuant<- quantile(  ss, 
                              probs=c(0.001, 0.01, 0.05, 0.10, 0.20, 0.30, 0.40, 0.45,
@@ -41,7 +42,7 @@ get20mBandInfo<-function(bandsPath, verbose=F){
 }
 
 makeVRT<-function(path, vrtname="mapservVRT_20m.vrt", verbose=F){
-  
+
   rasters.start<-list.files(path, ".*_20m\\.jp2$", recursive=T, full.names = T)
   #rasters.start.60<-list.files(path, ".*B01_60m\\.jp2$|.*B09_60m\\.jp2$", recursive=T, full.names = T)
   #rasters.start <- c(rasters.start, rasters.start.)

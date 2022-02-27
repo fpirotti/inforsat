@@ -96,7 +96,6 @@ update.Image.LUT <- function(verbose = F) {
       return(NULL)
     }
 
-    
     if(verbose) message( sprintf("\n ---Faccio %s--\n", folder.name))
     ww <- which(nchar(x) == 15)
     if (length(ww) < 1) {
