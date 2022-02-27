@@ -36,10 +36,7 @@ load("images.lut.rda")
 ## list con chiave il path del folder SAFE e valore della data
 #images.lut<-NULL
 
-tiles.geom <- st_read("tilesS2.gpkg",  query = sprintf("SELECT * FROM \"tilesS2\" WHERE name in ('%s')", paste0(collapse = "','", levels(images.lut$tile) )  )  )
-
-
- 
+tiles.geom <- st_read("tilesS2.gpkg", query = sprintf("SELECT * FROM \"tilesS2\" WHERE name in ('%s')", paste0(collapse = "','", levels(images.lut$tile) )  )  )
 
 update.Image.LUT <- function(verbose = F) {
   imagelist <-

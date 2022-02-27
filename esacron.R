@@ -114,7 +114,7 @@ getImage <- function(page=1, daysback=600, url=NA){
   }
   
   CC<<-CC+1
-  message("\nFINISHED LOOP  ",  CC, " .... ") 
+  message("\nFINISHED LOOP  ",  CC, " of ",  ceiling(as.integer(res.list$feed$`opensearch:totalResults`)/10) ,  ".... ") 
   isnext <- res.list$feed$link %>% filter(rel=="next")
   if(nrow(isnext)==1){
     getImage(url=isnext$href)
@@ -125,5 +125,4 @@ getImage <- function(page=1, daysback=600, url=NA){
 getImage()
 
 
-
-# update.Image.LUT(T)
+update.Image.LUT(T)
