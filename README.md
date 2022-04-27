@@ -10,6 +10,8 @@ InforSAT uses state of the art open source engines to
     - extract zonal statistics from user-defined areas over the full available timeline
     - download timeseries of index values for further processing
 
+InforSAT is used for support in teaching.
+
 InforSAT wants to provide users with means to collect spatio-temporal data from satellite imagery quickly, but keeping track of reliability and accuracy loss due to clouds, shade and other atmospheric or other disturbance. 
 
 ## Behind the scenes
