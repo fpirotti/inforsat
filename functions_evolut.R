@@ -100,12 +100,12 @@ compositeCreate<-function(session){
   
   histTable<-sapply(BANDS[bandIndex], '[[', "colorHist")
  
- 
-  plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", 
-                    list(as.integer(0), as.integer(1), as.integer(2),
-                         as.integer(3), as.integer(4), as.integer(5), 
-                         as.integer(6), as.integer(7), as.integer(8),
-                         as.integer(9), as.integer(10), as.integer(11)) )
+  # 
+  # plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", 
+  #                   list(as.integer(0), as.integer(1), as.integer(2),
+  #                        as.integer(3), as.integer(4), as.integer(5), 
+  #                        as.integer(6), as.integer(7), as.integer(8),
+  #                        as.integer(9), as.integer(10), as.integer(11)) )
 
   
   scale<-c()
@@ -135,16 +135,16 @@ compositeCreate<-function(session){
     
     #plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "deleteTraces", list(as.integer(1)) )
     
-    plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "addTraces", list(
-      list(
-        x = qq$mids,
-        name = sprintf("(%s)",i ),
-        y =  pp,
-        type = 'scatter',
-        mode = 'lines',
-        line = list(shape = "spline")
-      )
-    ))
+    # plotlyProxyInvoke(plotlyProxy("bandHistogram", session), "addTraces", list(
+    #   list(
+    #     x = qq$mids,
+    #     name = sprintf("(%s)",i ),
+    #     y =  pp,
+    #     type = 'scatter',
+    #     mode = 'lines',
+    #     line = list(shape = "spline")
+    #   )
+    # ))
     
   }
 

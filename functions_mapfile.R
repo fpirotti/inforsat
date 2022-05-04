@@ -55,6 +55,7 @@ createColorScale4index <- function(session, qq, qq.color){
     addLegend(
       colors = rgb(t(col2rgb(qq.color)) / 255),
       labels = sprintf("%.2f", qq), opacity = 1,
+      position = "topleft",
       layerId = "myLegend")
   
 }

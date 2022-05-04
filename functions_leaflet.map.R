@@ -51,11 +51,11 @@ leaflet.object <-
     baseGroups = c("Blank", "OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto",  
                    "Ortofoto 2018 Regione Veneto", "BING"),
     overlayGroups = as.character(c(overlayGroups.WMS.layerIDS, "Sentinel-2 TILES")),
-    layersControlOptions(autoZIndex = TRUE, collapsed = F) 
+    layersControlOptions(autoZIndex = FALSE, collapsed = F) 
   ) %>% 
   
   hideGroup( as.character(overlayGroups.WMS.layerIDS) )   %>% 
-  showGroup( "Ortofoto 2018 Regione Veneto" )   %>% 
+  showGroup( "BING" )   %>% 
   
   showGroup( "INDICE" )   %>% 
   leaflet.extras::addDrawToolbar(

@@ -32,12 +32,12 @@ radio2expression<- list( "ARVI2 - Atmospherically Resistant Vegetation Index 2" 
 ## NB versione con cloud mask= +1 e con snow mask +2 entrambi +3
 satLayers<-list("Sentinel-2 Color Composite RGB"=c("100", ""), 
                 "Sentinel-2 Color Composite NIR"=c("200",""),
-                "Vegetatino INDEX"=c("300", "Indice vegetazionale scelto"),
+                "Vegetation INDEX"=c("300", "Indice vegetazionale scelto"),
                 "Sentinel-2 Scene Classification"=c("300", "") )
 
 
 processingComposite<-list(
-  "Colori Reali" = paste("B04","B03","B02"),  
+  "Real" = paste("B04","B03","B02"),  
   "NIR1 (8,4,3)" = paste("B8A","B04","B03"),
   "NIR2 (7,4,3)" = paste("B07","B04","B03"),
   "NIR3 (6,4,3)" = paste("B06","B04","B03"),
@@ -45,9 +45,9 @@ processingComposite<-list(
   "Urban (12,11,4)" = paste("B12","B11", "B04"),
   "Agriculture (11,8,2)" = paste("B11","B8A","B02"),
   "Atmospheric penetration (12,11,8)" = paste("B12","B11","B8A"),
-  "Vegetazione sana (8,11,2)" = paste("B8A","B11","B02"),
-  "Suolo/Acqua (8,11,4)" = paste("B8A","B11","B04"),
-  "Colori naturali compensati con atmosfera (12,8,3)" = paste("B12","B8A","B03"),
+  "Healthy vegetation (8,11,2)" = paste("B8A","B11","B02"),
+  "Soil/Water (8,11,4)" = paste("B8A","B11","B04"),
+  "Real with atmospheric correction (12,8,3)" = paste("B12","B8A","B03"),
   "SWIR (12,8,4)" = paste("B12","B8A","B04")
 )
 processingMasking<-data.frame(

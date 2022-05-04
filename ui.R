@@ -25,7 +25,7 @@ ui <-  dashboardPage(
                                   duration=0.5
                                 )
                               ), 
-                              actionBttn("showAnalysisPanel", "Analysis Panel", size="sm", style = "simple" ),
+                              actionBttn("showAnalysisPanel", "Multi-temporal Plot", size="sm", style = "simple" ),
                               actionBttn("showNotificationPanel", "Logs&Notifications", size="sm", style = "simple" ),
                               
                               
@@ -64,30 +64,37 @@ ui <-  dashboardPage(
     
     selectInput(inputId = 'resampling',
                 label = 'Resampling method (GDAL)',
-                choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") 
+                choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") ,
+                  selected="bilinear"
     ),
     
     div(title="Fix scale so that it does not change depending on min max values. Blocca ad una scala lineare i valori dell'indice, utile per eseguire confronti",
         switchInput( 
           inputId = "freezeScale", offStatus="success",
           label = "Color&nbsp;Scale",
-          offLabel = "Fixed",
-          onLabel = "Auto", 
-          value=T  , handleWidth=230
+          offLabel = "Auto",
+          onLabel = "Fixed", 
+          value=F  , handleWidth=230
         ) 
     ),
     
     actionBttn(inputId = "aggiorna", label = "Redraw", icon=icon("recycle"), 
                style="simple", color = "primary", size="sm"),
-    actionButton("calcola", "Process areas for PLOT") ,
-    fluidRow( style="border:1px dotted white; margin:1px;", title="Use parallel computing ",
-      column(6, 
-             div(   style="display:inline-block",
+    hr(),
+    div(style="border:1px dotted white; margin:-1px; padding:2px;", 
+      div(style="font-weight: 700;", "Multi-temporal Analysis"),
+      div("Parallelize over Multiple Cores"),
+      fluidRow(  title="Use parallel computing ",
+
+      column(5, 
+             div(    
                   switchInput("parallel", label = "<i class=\"fa fa-bars fa-rotate-90\"></i>", onLabel = "Yes", offLabel = "No",   value = FALSE) 
                   ) 
              ),
-      div( title="Number of Cores (max 12)",  column(6,  numericInput("nCores", NULL, 4, 1, 12, 1) ) )
-    )
+      column(7, title="Number of Cores (max 4 for guests, 32 for admin)",    numericInput("nCores", NULL, 2, 1, 4, 1) )  
+    ),  
+       div(title="If areas have been added by user, this tool extracts and plots multi-temporal data from all available images.", actionButton("calcola",  "Data Extraction in Areas") )
+      )
    
   ),
   
@@ -95,13 +102,13 @@ ui <-  dashboardPage(
     controlbarMenu(
       id = "cb_menu",
       controlbarItem(
-        "Indici",
+        "Index Panel",
         selectizeInput(
           "indici",
           width = "100%",
-          label = "Indici",
+          label = "Index",
           choices = radio2expression,
-          selected = character(0)
+          selected = radio2expression[["NDVI - Normalized Difference Vegetation Index"]]
         ) , 
         div( textInput("indici_formula", label = "Formula", placeholder = "custom index", ) , title="You can define your index here NOT YET ACTIVE!!"),
         div("Please use the following band names when creating your formula: B01,B02,...,B8A,...B12. NOT B09 and B01, these are not yet implemented")
@@ -109,10 +116,10 @@ ui <-  dashboardPage(
       ),
       
       controlbarItem(
-         "Composite",
+         "Color Composition",
         selectizeInput(
           "composite",
-          label = "Combinazioni bande",
+          label = "Band combinations",
           choices = processingComposite,
           selected = character(0)
         ),

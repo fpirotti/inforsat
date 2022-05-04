@@ -19,12 +19,14 @@
 */
 
 .logo{
-  background-image: url("img/logocirgeoUNIPD-TESAF.png");
+  background-image: url("img/logocirgeoUNIPD-TESAF3.png");
   background-repeat: no-repeat; 
     background-size: contain;
     /* background-color: transparent !important; */
     text-align: right !important;
-    background-blend-mode: multiply;
+    background-color: #ffffff !important;
+    color: #b00000 !important;
+    font-weight: 500 !important;
 }
 #scaricaPoligoni, #scaricaIndice, #scaricaTabellaValori, #scaricaImmagini {
     margin: 5px 15px;

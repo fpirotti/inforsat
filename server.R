@@ -23,6 +23,7 @@ server <- function(input, output, session) {
  
     tt <- tiles.geom %>% filter(name == input$tile)
     ttb <- st_bbox(tt)
+    
     leafletProxy("mymap")  %>%
       leaflet::fitBounds( ttb[["xmin"]]  ,  ttb[["ymin"]], ttb[["xmax"]], ttb[["ymax"]])  
  
@@ -53,18 +54,21 @@ server <- function(input, output, session) {
         range = c(0, 18000),
         rangeslider = list(type = "numeric")
       ),
-      yaxis = list(title = "Frequenza", range = c(0, 1.1)),
-      title = sprintf("Istogramma f(x)")
+      yaxis = list(title = "Frequency", range = c(0, 1.1)),
+      title = sprintf("Frequency histogram f(x)")
     ) %>%  add_markers(
       x = c(200, 4000),
       y = 0,
-      name = "Info Bande",
+      name = "Band Info",
       marker = list(
         symbol = "square",
         color = "black",
         size = 9
       )
-    ) #%>% event_register('plotly_selected')
+    )# %>% 
+    # add_trace(dataDf(), x = ~time, y = ~weight, 
+    #           line = list(shape = "spline"),
+    #           type = 'scatter', mode = 'lines',name = "weight") 
     
   })
   
