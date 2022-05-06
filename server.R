@@ -174,7 +174,20 @@ server <- function(input, output, session) {
     if (input$myBoxAnalytics$collapsed)  updateBox( "myBoxAnalytics", action ="toggle")   
   })
 
-
+  
+  observeEvent(input$showHelpPanel, { 
+    showModal(modalDialog(
+      easyClose = T, icon= icon("book", verify_fa=F),
+      fade = TRUE,
+      title =  HTML(paste0(icon("book", verify_fa=F), " Help ")),  
+      HTML(paste0("On the left menu - top selector - choose your area by selecting the tile code, then in the next selection select the image date.
+      <BR>You will see an index map automatically created. You can change index or calculate your own index by opening the right panel using the gears icon (", icon("gears", verify_fa=F), ") on the top right corner.",
+                  "<br>For multi-temporal analysis you have to draw one or more areas with the tools on the top left of the map (<b>size is limited to max 4 squared km</b>).",
+                  "Once the aras are drawn, you can press the lower button in the left menu to extract all index values inside each area and plot them in the multi-temporal plot panel (", icon("chart-line", verify_fa=F), ").",
+                  "<br>"))
+    ))
+  })
+  
   observeEvent(input$leafletRendered, { 
      
   
@@ -184,7 +197,13 @@ server <- function(input, output, session) {
                      $('.leaflet-control-layers').appendTo( $('#legendPlaceholder') );
                      $('.leaflet-control-layers-overlays').children().after( function(){return '<input type=\"range\" min=\"0\" max=\"100\" value=\"100\"  oninput=\"changeLayerOpacity($(this))\" ><hr class=legendHR >' } ); 
                      $('.leaflet-control-layers-overlays').children('label').children('div').css(\"float\", \"left\");
-                     $('.leaflet-control-layers-overlays').children('label').after('&nbsp;<span style=\"float:right;\" title=\"Split view line at mouse\" class=\"fa fa-toggle-on fa-2x fa-rotate-180 toggler\" ></span>')
+                     $('.leaflet-control-layers-overlays').children('label').after('&nbsp;<span style=\"float:right;\" title=\"Toggle lens at mouse position for this layer\" class=\"fa fa-toggle-on fa-2x fa-rotate-180 toggler\" ></span>')
+                     $('.toggler').qtip({
+                        hide: {
+                          event: 'unfocus click mouseleave blur',
+                          inactive: 5000
+                        }
+                     });  
                      $('.toggler').on('click', function (e) {
                         $(this).toggleClass('fa-rotate-180 off');
                             if($(this).hasClass('fa-rotate-180'))  {

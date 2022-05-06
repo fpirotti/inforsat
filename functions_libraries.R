@@ -30,10 +30,10 @@ radio2expression<- list( "ARVI2 - Atmospherically Resistant Vegetation Index 2" 
 
 ## nome layer e ID in WMS mapserver
 ## NB versione con cloud mask= +1 e con snow mask +2 entrambi +3
-satLayers<-list("Sentinel-2 Color Composite RGB"=c("100", ""), 
-                "Sentinel-2 Color Composite NIR"=c("200",""),
-                "Vegetation INDEX"=c("300", "Indice vegetazionale scelto"),
-                "Sentinel-2 Scene Classification"=c("300", "") )
+satLayers<-list("Color Composite RGB"=c("100", ""), 
+                "Color Composite NIR"=c("200",""),
+                "Vegetation Index"=c("300", "Indice vegetazionale scelto"),
+                "Scene Classification"=c("300", "") )
 
 
 processingComposite<-list(

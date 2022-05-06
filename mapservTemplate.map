@@ -80,7 +80,7 @@ MAP
   LAYER
     NAME "300"
     METADATA
-      "wms_title"    "INDEX"  ##required
+      "wms_title"    "Index"  ##required
     END
     
     ##--- INDEX PLACEMARK

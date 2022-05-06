@@ -42,12 +42,12 @@ createColorScale4index <- function(session, qq, qq.color){
   
   leaflet::leafletProxy('mymap') %>%
     
-    leaflet::clearGroup(group='INDICE') %>%
+    leaflet::clearGroup(group='Index') %>%
     leaflet::removeControl('myLegend') %>% 
     #leaflet::showGroup(group='INDICE') %>%
     addWMSTiles(
       session$userData$wms.url,
-      group="INDICE",
+      group="Index",
       layers = "300", 
       options = WMSTileOptions( format = "image/png", transparent = T, 
                                 cache=as.character(Sys.time())  ),

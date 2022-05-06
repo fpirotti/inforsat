@@ -22,6 +22,10 @@ var spyGlassDeactivate = function(e) {
    var lid = e.prev().children().first().children()[0].layerId;
    var iof = spyGlassActivelayers.indexOf(lid);
    if(iof != -1)  spyGlassActivelayers.splice(iof, 1);
+   
+    var obj = myMap._layers[ lid ]._layers;
+    var cont = obj[Object.keys(obj)[0]]._container;  
+    cont.style['clip-path']=``;  
 };
 
 var spyGlass = function(e) {
@@ -92,10 +96,26 @@ function getPNGs(prefix){
       }
 }
 
+var contentqtipf=(function(){ return $(this).attr('title');   } );
 
 $(window).on('load', function() { 
-  
-
+  $('[title]').qtip({ 
+            hide: {
+                  event: 'unfocus click mouseleave blur',
+                   inactive: 5000
+            },
+            prerender: true,
+            position: {
+               //target: 'mouse',
+                //viewport: $(window),
+                adjust : {
+                   method: 'shift shift'
+                }
+            },
+            content: contentqtipf
  
+  }); 
+  
+  
 });
 

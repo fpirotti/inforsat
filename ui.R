@@ -13,6 +13,12 @@ ui <-  dashboardPage(
   preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#000000"),
   header = dashboardHeader( title = HTML("InforSAT"),
                             leftUi = tagList(
+                              
+                              actionBttn("showHelpPanel", "Help", 
+                                         icon("book", verify_fa=F), size="sm", 
+                                         style = "simple" ),
+                              
+                             
                               dropdown(  
                                 div(id="legendPlaceholder", style=" margin:0 -10px;") ,
                                  
@@ -25,7 +31,8 @@ ui <-  dashboardPage(
                                   duration=0.5
                                 )
                               ), 
-                              actionBttn("showAnalysisPanel", "Multi-temporal Plot", size="sm", style = "simple" ),
+                              actionBttn("showAnalysisPanel", "Multi-temporal Plot", icon = icon("chart-line", verify_fa=F), size="sm", 
+                                         style = "simple" ),
                               actionBttn("showNotificationPanel", "Logs&Notifications", size="sm", style = "simple" ),
                               
                               
@@ -55,20 +62,25 @@ ui <-  dashboardPage(
     minified = F,
     # sidebarSearchForm(textId = "searchText", buttonId = "searchButton",
     #                   label = "Search..."),
-    selectInput(inputId = 'tile',
+    div(title="Select what image you want to render, in parenthesis are the number of available dates for that image tile", 
+        selectInput(inputId = 'tile',
                 label = 'Choose tile', 
-                choices = c("", tt) ),
+                choices = c("", tt) ) ),
+    
+    div(title="Select what image date you want to render", 
     selectInput(inputId = 'dayselected',
                 label = 'Choose Image Date', 
-                choices = NULL ),
+                choices = NULL ) 
+    ),
     
     selectInput(inputId = 'resampling',
-                label = 'Resampling method (GDAL)',
+                label = 'Resampling method',
                 choices=c("near","bilinear","cubic","cubicspline","lanczos","average","mode","max") ,
                   selected="bilinear"
     ),
     
-    div(title="Fix scale so that it does not change depending on min max values. Blocca ad una scala lineare i valori dell'indice, utile per eseguire confronti",
+    div(title="<b>Fixed</b> fixes the scale range of the index map so that it does not change depending on min max values of the created index map.
+       <br> <b>Auto</b> calculates an ideal scale range using 10/90 percentiles of frequency histogram",
         switchInput( 
           inputId = "freezeScale", offStatus="success",
           label = "Color&nbsp;Scale",
@@ -78,10 +90,11 @@ ui <-  dashboardPage(
         ) 
     ),
     
-    actionBttn(inputId = "aggiorna", label = "Redraw", icon=icon("recycle"), 
-               style="simple", color = "primary", size="sm"),
-    hr(),
-    div(style="border:1px dotted white; margin:-1px; padding:2px;", 
+    div(actionBttn(inputId = "aggiorna", label = "Redraw Index Map", icon=icon("recycle"), 
+               style="simple", color = "primary", size="sm"), title="<b>Index map is only updated on demand</b> because it is created on the fly from the sensor imagery
+        So make sure that you redraw it if you zoom or pan your map." ),
+ 
+    div(style="  margin:5px; padding:5px; border-top:solid 2px white; ", 
       div(style="font-weight: 700;", "Multi-temporal Analysis"),
       div("Parallelize over Multiple Cores"),
       fluidRow(  title="Use parallel computing ",
@@ -93,7 +106,8 @@ ui <-  dashboardPage(
              ),
       column(7, title="Number of Cores (max 4 for guests, 32 for admin)",    numericInput("nCores", NULL, 2, 1, 4, 1) )  
     ),  
-       div(title="If areas have been added by user, this tool extracts and plots multi-temporal data from all available images.", actionButton("calcola",  "Data Extraction in Areas") )
+       div(title="If areas have been added by user, this tool extracts and plots multi-temporal data from all available images.", 
+           actionButton("calcola",  "Index Values in Areas") )
       )
    
   ),
@@ -159,15 +173,21 @@ ui <-  dashboardPage(
     shinyalert::useShinyalert(force=T), 
     shinyjs::useShinyjs(),
     
-    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=sdfgsdfsd"),
-    tags$head(tags$script(src="myfuncts.js?v=3qwdf")) , 
+    tags$link(rel = "stylesheet", type = "text/css", href = "mycss2.css?v=sdfgdefsd"),
+    
+    tags$link(rel="stylesheet", type="text/css", href="jquery.qtip.min.css"),
+    
+    tags$head(tags$script(src="myfuncts.js?v=3dsddf")) , 
     tags$head(tags$script(src="html2canvas.min.js")) , 
     
+    tags$head(tags$script(  src="jquery.qtip.min.js")),
+    
+     
     
     jqui_draggable(  
       column(12, style="displan:none; position:absolute;z-index:999999999; width:calc( 100vw - 60px ); top:5px; left:10px;", 
           box( id= "myBoxAnalytics",
-                                   title = HTML(paste0(icon("gears"), " Analytics                ")), 
+                                   title = HTML(paste0(icon("chart-line"), " Multi-temporal Analytics                ")), 
                                    closable = TRUE,  width = NULL,
                                    collapsed = F,
                                    enable_label = T, 

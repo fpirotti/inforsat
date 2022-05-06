@@ -17,7 +17,9 @@
   color:#000 !important;
 }
 */
-
+section.sidebar .shiny-input-container {
+  margin-bottom: 0px !important;
+}
 .logo{
   background-image: url("img/logocirgeoUNIPD-TESAF3.png");
   background-repeat: no-repeat; 
@@ -27,6 +29,8 @@
     background-color: #ffffff !important;
     color: #b00000 !important;
     font-weight: 500 !important;
+    letter-spacing: 1.4px !important;
+    font-size: 24px !important;
 }
 #scaricaPoligoni, #scaricaIndice, #scaricaTabellaValori, #scaricaImmagini {
     margin: 5px 15px;

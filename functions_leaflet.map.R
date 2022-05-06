@@ -1,9 +1,9 @@
 
-overlayGroups.WMS.layerIDS <- list("100"="S2 Color Composite",
-                                   "400"="S2 Scene Classification", 
-                                   "500"="S2 CLOUD MSK", 
-                                   "600"="S2 SNOW MSK", 
-                                   "300"="INDICE")  
+overlayGroups.WMS.layerIDS <- list("100"="Color Composite",
+                                   "400"="Scene Classification", 
+                                   "500"="Cloud Mask", 
+                                   "600"="Snow Mask", 
+                                   "300"="Index")  
 
 #as.character(overlayGroups.WMS.layerIDS)
 ###  OGGETTO LEAFLET DA METTERE SU SERVER.R ------
@@ -22,20 +22,20 @@ leaflet.object <-
   leaflet::addTiles(urlTemplate  ="//idt2.regione.veneto.it/gwc/service/wmts?&REQUEST=GetTile&contextualWMSLegend=0&crs=EPSG:900913&dpiMode=7&format=image/jpeg&layer=rv:OrthoPhoto_2015_pyramid&styles=&tileMatrixSet=EPSG:900913&TILEMATRIX=EPSG:900913:{z}&TILEROW={y}&TILECOL={x}&url=https://idt2.regione.veneto.it/gwc/service/wmts",
                     #layers = "rv:OrthoPhoto_2015_pyramid",
                     options = tileOptions(crs="EPSG:900913", format = "image/jpeg", transparent = FALSE),
-                    group="Ortofoto 2015 Regione Veneto",
+                    group="Orthoimagery 2015 Veneto",
                     attribution = "© Regione Veneto"
-  )%>%  
+  )%>%
   leaflet::addTiles(urlTemplate  ="//idt2.regione.veneto.it/gwc/service/wmts?&REQUEST=GetTile&contextualWMSLegend=0&crs=EPSG:900913&dpiMode=7&format=image/png&layer=rv:Ortofoto2018_Veneto&styles=&tileMatrixSet=EPSG:900913&TILEMATRIX=EPSG:900913:{z}&TILEROW={y}&TILECOL={x}&url=https://idt2.regione.veneto.it/gwc/service/wmts",
                           #layers = "rv:OrthoPhoto_2015_pyramid",
                           options = tileOptions(crs="EPSG:900913", format = "image/jpeg", transparent = FALSE),
-                          group="Ortofoto 2018 Regione Veneto",
+                          group="Orthoimagery 2018 Veneto",
                           attribution = "© Regione Veneto"
   )%>%
   leaflet::addTiles(urlTemplate  ='', group="Blank")%>%
   leaflet::addPolygons(
     data = as_Spatial(st_zm(tiles.geom))  , 
     color = "#FF0000",
-    group="Sentinel-2 TILES",
+    group="Sentinel-2 Tiles",
     weight = 3,
     opacity = 0.8,
     fill = FALSE,  
@@ -48,16 +48,16 @@ leaflet.object <-
   ) %>% 
   leaflet::addLayersControl(
     position =("topright"),
-    baseGroups = c("Blank", "OpenStreetMap","ESRI","Ortofoto 2015 Regione Veneto",  
-                   "Ortofoto 2018 Regione Veneto", "BING"),
-    overlayGroups = as.character(c(overlayGroups.WMS.layerIDS, "Sentinel-2 TILES")),
+    baseGroups = c("Blank", "OpenStreetMap","ESRI","Orthoimagery 2015 Veneto",  
+                   "Orthoimagery 2018 Veneto", "BING"),
+    overlayGroups = as.character(c(overlayGroups.WMS.layerIDS, "Sentinel-2 Tiles")),
     layersControlOptions(autoZIndex = FALSE, collapsed = F) 
   ) %>% 
   
   hideGroup( as.character(overlayGroups.WMS.layerIDS) )   %>% 
   showGroup( "BING" )   %>% 
   
-  showGroup( "INDICE" )   %>% 
+  showGroup( "Index" )   %>% 
   leaflet.extras::addDrawToolbar(
     targetGroup='draw',
     editOptions = editToolbarOptions(selectedPathOptions = selectedPathOptions()),
@@ -96,9 +96,11 @@ updateMap<-function(session){
   for(i in as.character(overlayGroups.WMS.layerIDS) ){
     leaflet::clearGroup(leaflet::leafletProxy('mymap') , 
                         group=i)
+    print(i)
   }
   
   for(i in names((overlayGroups.WMS.layerIDS)) ){
+    print(i)
     addWMSTiles(leaflet::leafletProxy('mymap'), 
       session$userData$wms.url,
       group= overlayGroups.WMS.layerIDS[[i]],
